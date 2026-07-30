@@ -172,7 +172,7 @@ select ok(
     where schemaname = 'storage'
       and tablename = 'objects'
       and policyname = 'Users can delete materials from their courses'
-      and command = 'DELETE'
+      and cmd = 'DELETE'
       and 'authenticated' = any(roles)
   ),
   'private material deletion is restricted to authenticated callers'
