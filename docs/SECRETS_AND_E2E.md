@@ -86,12 +86,25 @@ E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
 pnpm test:e2e:live --project=chromium
 ```
 
+For the two-user isolation journey, add a second dedicated account:
+
+```bash
+E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
+E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD"
+```
+
+The database enforces independent hourly and daily limits for chat and study
+plan generation. A `429` from either function therefore means the current usage
+window is exhausted; wait until the reported reset time instead of rotating the
+Gemini secret.
+
 Do not use a maintainer's personal account. If the live course test fails before
 cleanup, remove the uniquely prefixed `E2E Course ...` record from the test
 account before rerunning.
 
-GitHub Actions runs the static/unit/build gate and local public Chromium smoke
-suite for each pull request. The manually triggered **Live product verification**
+GitHub Actions runs static, unit, Deno, database, build, and local public
+Chromium gates for branch pushes and pull requests. The manually triggered
+**Live product verification**
 workflow accepts a deployment URL and reads `E2E_EMAIL` and `E2E_PASSWORD` from
 the protected `preview` GitHub environment. Run it after Supabase or Vercel
 preview deployment. Do not expose those secrets to untrusted pull-request

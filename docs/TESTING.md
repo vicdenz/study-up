@@ -24,6 +24,7 @@ pnpm test:suite bootstrap
 | --- | --- | --- | --- |
 | Quick gate | `pnpm test:suite quick` | None | Lint, types, unit tests, infra checks, build, and audit |
 | Unit + coverage | `pnpm test:suite unit` | None | Vitest with per-file 100% thresholds for covered pure utilities |
+| Edge Functions | `pnpm test:suite functions` | Deno 2 | Request parsing, CORS, safe errors, and quota enforcement |
 | Public product | `pnpm test:suite public` | Chromium | Desktop and mobile Playwright tests without a backend |
 | Database | `pnpm test:suite database` | Docker | Migration replay, pgTAP schema/RLS tests, and schema lint |
 | Local CRUD | `pnpm test:suite local` | Local Supabase and `.env.e2e.local` | Authenticated course CRUD |
@@ -52,6 +53,7 @@ pnpm typecheck
 pnpm test:unit
 pnpm test:unit:coverage
 pnpm test:unit:watch
+pnpm test:functions
 pnpm infra:verify
 pnpm build
 pnpm audit --audit-level=high
@@ -120,7 +122,9 @@ pnpm test:suite live
 
 The runner exits before Playwright starts if any required setting is missing or
 invalid. Live CRUD uses a unique course name and attempts cleanup even when an
-assertion fails.
+assertion fails. To enable the optional cross-user isolation journey, also set
+`E2E_SECONDARY_EMAIL` and `E2E_SECONDARY_PASSWORD` for a second dedicated
+low-privilege account.
 
 ## CI entry points and artifacts
 
@@ -129,6 +133,7 @@ Future CI providers can call these independent commands:
 ```bash
 CI=true pnpm test:ci:static
 CI=true pnpm test:ci:unit
+CI=true pnpm test:ci:functions
 CI=true pnpm test:ci:e2e
 pnpm test:suite database
 ```

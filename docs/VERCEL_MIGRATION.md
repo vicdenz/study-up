@@ -14,7 +14,7 @@ Only the static frontend moves from Lovable to Vercel. Supabase remains the data
 
 ## Phase 0: ownership and backups
 
-Owner: project maintainer  
+Owner: project maintainer
 Rollback point: current Lovable deployment
 
 1. Confirm administrative access to GitHub, Vercel, Supabase, DNS, and Gemini billing.
@@ -70,13 +70,13 @@ Exit criteria: migrations and functions are deployed, cross-user negative tests 
 Owner: frontend/deployment maintainer
 
 1. Import the GitHub repository into Vercel.
-2. Add `ENABLE_EXPERIMENTAL_COREPACK=1` to Development, Preview, and
-   Production so Vercel uses the exact pnpm version pinned in `package.json`.
+2. Keep the committed `pnpm-lock.yaml` and `packageManager` pin. Vercel
+   natively supports pnpm 10 and detects it from the lockfile.
 3. Use repository root `.` and framework preset `Vite`.
 4. Select Node.js 22 in Project Settings.
-5. Keep the repository commands:
+5. Keep the repository build settings:
 
-   - Install: `pnpm install --frozen-lockfile`
+   - Install: automatic lockfile detection (do not add an Install Command override)
    - Build: `pnpm build`
    - Output: `dist`
 
@@ -125,7 +125,7 @@ and secrets are deployed.
 
 ## Phase 4: production and DNS cutover
 
-Owner: deployment maintainer  
+Owner: deployment maintainer
 Recommended window: low traffic
 
 1. Promote the verified commit to a Vercel production deployment.
@@ -151,10 +151,19 @@ Frontend rollback is independent of the database:
 ## Post-migration backlog
 
 - Add GitHub branch protection requiring `pnpm check`.
-- Expand the Playwright and disposable Supabase baselines to cover uploads,
-  assignment/note/planner flows, and Edge Function HTTP behavior.
 - Enable Supabase automatic preview branches when the team needs hosted,
   per-pull-request databases in addition to the disposable local CI stack.
-- Add AI quotas, spend alerts, and application monitoring.
+- Configure Gemini billing alerts and application monitoring in the selected
+  operational platforms. Per-user hourly and daily AI quotas are enforced in
+  the database, but provider-level budget alerts still require Gemini project
+  access.
 - Add a production Open Graph image using the final canonical domain.
+- Add an explicit license and approved privacy/data-retention policy.
 - Remove the Lovable deployment only after the agreed retention window.
+
+The repository baseline now covers authenticated course, assignment, note,
+private upload, planner keyboard, Gemini, and optional two-user isolation
+journeys. The disposable database suite covers schema replay, quotas, table
+isolation, and private Storage object policies. Edge Function request parsing,
+CORS, safe error handling, and quota failure behavior run as isolated Deno
+tests.
