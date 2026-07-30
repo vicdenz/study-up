@@ -64,10 +64,16 @@ for (const forbiddenName of [
 
 const config = readFileSync("supabase/config.toml", "utf8");
 for (const functionName of ["chat-with-gemini", "generate-study-plan"]) {
-  const functionBlock = new RegExp(
-    `\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt\\s*=\\s*true`,
-  );
-  if (!functionBlock.test(config)) fail(`${functionName} must verify JWTs.`);
+  const header = `[functions.${functionName}]`;
+  const sectionStart = config.indexOf(header);
+  const sectionRemainder = config.slice(sectionStart + header.length);
+  const nextSection = sectionRemainder.search(/\r?\n\[/);
+  const section = nextSection === -1
+    ? sectionRemainder
+    : sectionRemainder.slice(0, nextSection);
+  if (sectionStart === -1 || !/verify_jwt\s*=\s*true/.test(section)) {
+    fail(`${functionName} must verify JWTs.`);
+  }
 }
 
 const migrationNames = readdirSync("supabase/migrations")
