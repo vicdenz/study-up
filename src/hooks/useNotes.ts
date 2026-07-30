@@ -30,7 +30,7 @@ export const useNotes = () => {
             .from('note_summaries')
             .select('summary')
             .eq('note_id', note.id)
-            .single();
+            .maybeSingle();
 
           return {
             ...note,
