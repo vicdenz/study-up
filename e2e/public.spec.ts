@@ -1,0 +1,77 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
+
+test.describe("@public public and unauthenticated journeys", () => {
+  test("landing page exposes the primary product actions", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(
+      page.getByRole("heading", { name: "Unlock Your Academic Potential" }),
+    ).toBeVisible();
+    await expect(page.getByAltText("StudyUp application screenshot")).toBeVisible();
+
+    await page.getByRole("button", { name: "Login" }).click();
+    await expect(page).toHaveURL(/\/auth$/);
+    await expect(
+      page.getByRole("heading", { name: "Welcome back" }),
+    ).toBeVisible();
+  });
+
+  test("authentication form supports sign-in and sign-up modes", async ({
+    page,
+  }) => {
+    await page.goto("/auth");
+
+    await expect(page.getByLabel("Email")).toHaveAttribute("type", "email");
+    await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
+    await page.getByRole("button", { name: "Sign up" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Create your account" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("First Name")).toBeVisible();
+    await expect(page.getByLabel("Last Name")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Account" }),
+    ).toBeVisible();
+  });
+
+  test("protected deep links redirect to authentication", async ({ page }) => {
+    await page.goto("/courses/not-a-real-course");
+
+    await expect(page).toHaveURL(/\/auth$/);
+    await expect(
+      page.getByRole("heading", { name: "Welcome back" }),
+    ).toBeVisible();
+  });
+
+  test("public pages have no serious accessibility violations", async ({
+    page,
+  }) => {
+    for (const path of ["/", "/auth"]) {
+      await page.goto(path);
+      const { violations } = await new AxeBuilder({ page }).analyze();
+      const seriousViolations = violations.filter(
+        ({ impact }) => impact === "critical" || impact === "serious",
+      );
+
+      expect(
+        seriousViolations,
+        `${path} has serious accessibility violations`,
+      ).toEqual([]);
+    }
+  });
+
+  test("landing content does not overflow the viewport", async ({ page }) => {
+    await page.goto("/");
+
+    const dimensions = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+
+    expect(dimensions.documentWidth).toBeLessThanOrEqual(
+      dimensions.viewportWidth + 1,
+    );
+  });
+});

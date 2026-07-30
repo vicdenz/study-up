@@ -59,13 +59,13 @@ const LandingPage = () => {
             </div>
         </div>
         <div className="flex items-center space-x-4">
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+            <a aria-label="LinkedIn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 <Linkedin className="h-5 w-5" />
             </a>
-            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+            <a aria-label="X" href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 <X className="h-5 w-5" />
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+            <a aria-label="GitHub" href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 <Github className="h-5 w-5" />
             </a>
         </div>

@@ -23,17 +23,17 @@ const Courses = () => {
   const { courses, isLoading, createCourse, deleteCourse, isCreating, isDeleting } = useCourses();
   const navigate = useNavigate();
 
-  const handleAddCourse = (courseData: {
+  const handleAddCourse = async (courseData: {
     name: string;
     code: string;
     description?: string;
     color: string;
   }) => {
-    createCourse(courseData);
+    return createCourse(courseData);
   };
 
   const handleDeleteCourse = (courseId: string) => {
-    deleteCourse(courseId);
+    void deleteCourse(courseId);
   };
 
   const handleAskAI = (courseId: string, courseName: string) => {
@@ -119,6 +119,7 @@ const Courses = () => {
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             onClick={(e) => e.stopPropagation()}
                             disabled={isDeleting}
+                            aria-label={`Delete ${course.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

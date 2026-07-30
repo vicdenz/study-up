@@ -60,9 +60,18 @@ npm run dev
 
 ```bash
 npm run check
+npm run test:e2e:public
 ```
 
-The combined check runs ESLint, strict TypeScript, unit tests, and the production build. `npm audit` should also report zero known vulnerabilities.
+The combined check runs ESLint, strict TypeScript (including the Playwright
+suite), unit tests, and the production build. The public browser suite covers
+navigation, auth boundaries, desktop/mobile Chromium, accessibility, and
+responsive overflow. `npm audit` should also report zero known vulnerabilities.
+
+Live product tests require a deployed URL and a dedicated test account. They
+exercise course CRUD and make a real authenticated Gemini request. See
+[docs/SECRETS_AND_E2E.md](docs/SECRETS_AND_E2E.md) for safe secret rotation and
+test commands.
 
 ## Deployment
 
