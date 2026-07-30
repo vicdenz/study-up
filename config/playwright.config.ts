@@ -8,6 +8,7 @@ const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 export default defineConfig({
   testDir: `${repositoryRoot}e2e`,
   outputDir: `${repositoryRoot}artifacts/playwright/test-results`,
+  snapshotPathTemplate: `${repositoryRoot}e2e/__screenshots__/{arg}{ext}`,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -71,8 +72,20 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
+    {
       name: "mobile-chromium",
       use: { ...devices["Pixel 7"] },
+    },
+    {
+      name: "mobile-webkit",
+      use: { ...devices["iPhone 15"] },
     },
   ],
 });

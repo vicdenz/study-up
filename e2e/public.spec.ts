@@ -103,4 +103,36 @@ test.describe("@public public and unauthenticated journeys", () => {
       dimensions.viewportWidth + 1,
     );
   });
+
+  test("reports connectivity loss and recovery", async ({ context, page }) => {
+    await page.goto("/");
+    await expect(page.getByText("You are offline.")).toHaveCount(0);
+
+    await context.setOffline(true);
+    await expect(
+      page.getByRole("status").filter({ hasText: "You are offline." }),
+    ).toBeVisible();
+
+    await context.setOffline(false);
+    await expect(page.getByText("You are offline.")).toHaveCount(0);
+  });
+
+  test("matches the reviewed authentication layout", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "The visual baseline uses the deterministic desktop Chromium project.",
+    );
+
+    await page.goto("/auth");
+    await expect(
+      page.getByRole("heading", { name: "Welcome back" }),
+    ).toBeVisible();
+    await expect(page.locator("body")).toHaveScreenshot("auth-page.png", {
+      animations: "disabled",
+      caret: "hide",
+      maxDiffPixelRatio: 0.01,
+    });
+  });
 });
