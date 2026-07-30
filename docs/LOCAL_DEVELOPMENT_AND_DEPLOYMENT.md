@@ -19,7 +19,7 @@ These control-plane steps require a human project owner:
 
    ```bash
    pnpm exec supabase login
-   pnpm exec supabase link --project-ref samjothygejcrgxizdra
+   pnpm exec supabase link --project-ref hzkwaecgggkjikwlvghi
    ```
 
 4. Confirm the production database major version with `show server_version;`.
@@ -33,7 +33,7 @@ These control-plane steps require a human project owner:
    these browser-safe variables for Preview and Production:
 
    ```dotenv
-   VITE_SUPABASE_URL=https://samjothygejcrgxizdra.supabase.co
+   VITE_SUPABASE_URL=https://hzkwaecgggkjikwlvghi.supabase.co
    VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
    ```
 

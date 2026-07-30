@@ -9,7 +9,7 @@ does not prove that `GEMINI_API_KEY` is present or that the configured model is
 available.
 
 The Supabase project reference in `supabase/config.toml` is
-`samjothygejcrgxizdra`. Never commit access tokens, Gemini keys, test-user
+`hzkwaecgggkjikwlvghi`. Never commit access tokens, Gemini keys, test-user
 credentials, or a service-role key.
 
 For local development, copy `supabase/.env.example` to
@@ -24,14 +24,14 @@ digests, not the secret values:
 
 ```bash
 supabase login
-supabase secrets list --project-ref samjothygejcrgxizdra
+supabase secrets list --project-ref hzkwaecgggkjikwlvghi
 ```
 
 Rotate the key without writing it to a repository file:
 
 ```bash
 read -s "GEMINI_KEY?New Gemini API key: "
-supabase secrets set --project-ref samjothygejcrgxizdra \
+supabase secrets set --project-ref hzkwaecgggkjikwlvghi \
   GEMINI_API_KEY="$GEMINI_KEY" \
   GEMINI_MODEL=gemini-3.6-flash
 unset GEMINI_KEY
@@ -40,16 +40,16 @@ unset GEMINI_KEY
 Set the exact Vercel preview and production origins, plus local development:
 
 ```bash
-supabase secrets set --project-ref samjothygejcrgxizdra \
+supabase secrets set --project-ref hzkwaecgggkjikwlvghi \
   ALLOWED_ORIGINS=https://preview.example.com,https://studyup.example.com,http://localhost:8080
 ```
 
 Deploy the audited function code and inspect logs:
 
 ```bash
-supabase functions deploy chat-with-gemini --project-ref samjothygejcrgxizdra
-supabase functions deploy generate-study-plan --project-ref samjothygejcrgxizdra
-supabase functions list --project-ref samjothygejcrgxizdra
+supabase functions deploy chat-with-gemini --project-ref hzkwaecgggkjikwlvghi
+supabase functions deploy generate-study-plan --project-ref hzkwaecgggkjikwlvghi
+supabase functions list --project-ref hzkwaecgggkjikwlvghi
 ```
 
 The definitive Gemini check is the live Playwright test below. It signs in,
