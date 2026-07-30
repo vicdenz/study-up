@@ -14,8 +14,8 @@ type Assignment = Database['public']['Tables']['assignments']['Row'];
 
 interface EditAssignmentDialogProps {
   assignment: Assignment;
-  onUpdate?: (data: { id: string; updates: AssignmentUpdate }) => void;
-  onUpdateAssignment?: (data: { id:string; updates: AssignmentUpdate }) => void;
+  onUpdate?: (data: { id: string; updates: AssignmentUpdate }) => Promise<unknown> | void;
+  onUpdateAssignment?: (data: { id:string; updates: AssignmentUpdate }) => Promise<unknown> | void;
   isUpdating?: boolean;
   children?: React.ReactNode;
   open?: boolean;
@@ -54,7 +54,7 @@ const EditAssignmentDialog = ({
     }
   }, [open, assignment]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
 
@@ -69,21 +69,27 @@ const EditAssignmentDialog = ({
       }
     };
 
-    if (onUpdate) {
-      onUpdate(updateData);
-    } else if (onUpdateAssignment) {
-      onUpdateAssignment(updateData);
+    try {
+      if (onUpdate) {
+        await onUpdate(updateData);
+      } else if (onUpdateAssignment) {
+        await onUpdateAssignment(updateData);
+      }
+      setOpen(false);
+    } catch {
+      // The mutation toast reports the error and the form remains available.
     }
-
-    // We optimistically close the dialog. It can be improved to close on mutation success.
-    setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Edit ${assignment.title}`}
+          >
             <Edit className="h-4 w-4" />
           </Button>
         )}

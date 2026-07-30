@@ -50,9 +50,8 @@ const CoursePage = () => {
   const totalAssignments = assignments?.length || 0;
   const calculatedProgress = totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0;
 
-  const handleUpdateAssignment = (updates: { id: string; updates: AssignmentUpdate }) => {
-    void updateAssignment(updates);
-  };
+  const handleUpdateAssignment = (updates: { id: string; updates: AssignmentUpdate }) =>
+    updateAssignment(updates);
 
   const handleDeleteAssignment = (assignment: Assignment) => {
     void deleteAssignment(assignment);
@@ -68,11 +67,12 @@ const CoursePage = () => {
     file: File;
   }) => {
     if (courseId) {
-      uploadMaterial({
+      return uploadMaterial({
         ...materialData,
         course_id: courseId
       });
     }
+    return Promise.reject(new Error("A course is required before uploading"));
   };
 
   const handleAskAI = () => {
@@ -264,6 +264,7 @@ const CoursePage = () => {
                             <Button asChild variant="ghost" size="sm">
                               <Link to={`/courses/${courseId}/assignments/${assignment.id}`}>
                                 <Eye className="h-4 w-4" />
+                                <span className="sr-only">View {assignment.title}</span>
                               </Link>
                             </Button>
                             <EditAssignmentDialog
@@ -273,7 +274,11 @@ const CoursePage = () => {
                             />
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label={`Delete ${assignment.title}`}
+                                >
                                   <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -365,6 +370,7 @@ const CoursePage = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
+                            aria-label={`Delete ${material.title}`}
                             onClick={() => deleteMaterial(material)}
                           >
                             <Trash2 className="h-4 w-4" />

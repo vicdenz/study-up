@@ -26,6 +26,8 @@ const validate = (
   delete env.E2E_BASE_URL;
   delete env.E2E_EMAIL;
   delete env.E2E_PASSWORD;
+  delete env.E2E_SECONDARY_EMAIL;
+  delete env.E2E_SECONDARY_PASSWORD;
   Object.assign(env, environment);
 
   return spawnSync(process.execPath, [validatorPath, mode], {
@@ -147,6 +149,32 @@ describe("E2E environment validator", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("E2E_EMAIL must contain");
     expect(result.stderr).toContain("E2E_PASSWORD must contain");
+  });
+
+  test("requires both secondary isolation credentials when either is set", () => {
+    const result = validate("live", {
+      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_EMAIL: "studyup-e2e@example.test",
+      E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD must be provided together",
+    );
+  });
+
+  test("accepts a complete secondary isolation account", () => {
+    const result = validate("live", {
+      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_EMAIL: "studyup-e2e@example.test",
+      E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
+    });
+
+    expect(result.status).toBe(0);
   });
 
   test("rejects unknown modes", () => {
