@@ -6,7 +6,7 @@
 
 ## Architecture
 
-- React 18, TypeScript, Vite, Tailwind CSS, and shadcn/ui
+- React 19, TypeScript, Vite, Tailwind CSS, and shadcn/ui
 - Supabase Auth, PostgreSQL with RLS, private Storage, and Edge Functions
 - Gemini API calls made only from authenticated Supabase Edge Functions
 - Static frontend deployment on Vercel
@@ -18,14 +18,14 @@ Vercel hosts the browser application. Supabase remains the stateful backend and 
 Requirements:
 
 - Node.js 22 (`nvm use` reads the committed `.nvmrc`)
-- npm
+- Corepack with pnpm 11.18.0 (`corepack enable` if `pnpm` is unavailable)
 - Docker Desktop for the local Supabase-compatible test stack
 - A Gemini API key
 
 Install dependencies and configure browser-safe environment variables:
 
 ```bash
-npm ci
+pnpm install --frozen-lockfile
 cp .env.example .env.local
 ```
 
@@ -53,7 +53,7 @@ supabase functions deploy generate-study-plan
 Start the app:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 For an entirely local backend, database tests, local Edge Functions, and a
@@ -63,18 +63,18 @@ generated test user, follow
 ## Quality gates
 
 ```bash
-npm run check
-npm run test:e2e:public
-npm run supabase:start:test
-npm run db:reset
-npm run db:test
-npm run db:lint
+pnpm check
+pnpm test:e2e:public
+pnpm supabase:start:test
+pnpm db:reset
+pnpm db:test
+pnpm db:lint
 ```
 
 The combined check runs ESLint, strict TypeScript (including the Playwright
 suite), unit tests, and the production build. The public browser suite covers
 navigation, auth boundaries, desktop/mobile Chromium, accessibility, and
-responsive overflow. `npm audit` should also report zero known vulnerabilities.
+responsive overflow. `pnpm audit` should also report zero known vulnerabilities.
 
 Live product tests require a deployed URL and a dedicated test account. They
 exercise course CRUD and make a real authenticated Gemini request. See

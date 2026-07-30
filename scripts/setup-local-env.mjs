@@ -5,7 +5,7 @@ const outputPath = ".env.local";
 
 if (existsSync(outputPath) && !process.argv.includes("--force")) {
   throw new Error(
-    `${outputPath} already exists. Re-run with \`npm run env:local -- --force\` to replace it.`,
+    `${outputPath} already exists. Re-run with \`pnpm env:local --force\` to replace it.`,
   );
 }
 

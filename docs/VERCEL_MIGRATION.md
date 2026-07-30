@@ -70,24 +70,26 @@ Exit criteria: migrations and functions are deployed, cross-user negative tests 
 Owner: frontend/deployment maintainer
 
 1. Import the GitHub repository into Vercel.
-2. Use repository root `.` and framework preset `Vite`.
-3. Select Node.js 22 in Project Settings.
-4. Keep the repository commands:
+2. Add `ENABLE_EXPERIMENTAL_COREPACK=1` to Development, Preview, and
+   Production so Vercel uses the exact pnpm version pinned in `package.json`.
+3. Use repository root `.` and framework preset `Vite`.
+4. Select Node.js 22 in Project Settings.
+5. Keep the repository commands:
 
-   - Install: `npm ci`
-   - Build: `npm run build`
+   - Install: `pnpm install --frozen-lockfile`
+   - Build: `pnpm build`
    - Output: `dist`
 
-5. Add these Vercel environment variables to Preview and Production:
+6. Add these Vercel environment variables to Preview and Production:
 
    ```dotenv
    VITE_SUPABASE_URL=https://<project-ref>.supabase.co
    VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
    ```
 
-6. Do not add `GEMINI_API_KEY`, a Supabase secret key, or a service-role key to Vercel. They belong only in Supabase Edge Function secrets.
-7. Deploy a preview. Vercel's Vite guidance requires a rewrite for SPA deep links; this is already encoded in `vercel.json`: <https://vercel.com/docs/frameworks/frontend/vite>.
-8. Add the preview's stable branch alias to the Supabase `ALLOWED_ORIGINS` secret and redeploy both Edge Functions before testing AI calls.
+7. Do not add `GEMINI_API_KEY`, a Supabase secret key, or a service-role key to Vercel. They belong only in Supabase Edge Function secrets.
+8. Deploy a preview. Vercel's Vite guidance requires a rewrite for SPA deep links; this is already encoded in `vercel.json`: <https://vercel.com/docs/frameworks/frontend/vite>.
+9. Add the preview's stable branch alias to the Supabase `ALLOWED_ORIGINS` secret and redeploy both Edge Functions before testing AI calls.
 
 Exit criteria: preview build succeeds and its deployment contains only the two expected public configuration variables.
 
@@ -148,7 +150,7 @@ Frontend rollback is independent of the database:
 
 ## Post-migration backlog
 
-- Add GitHub branch protection requiring `npm run check`.
+- Add GitHub branch protection requiring `pnpm check`.
 - Expand the Playwright and disposable Supabase baselines to cover uploads,
   assignment/note/planner flows, and Edge Function HTTP behavior.
 - Enable Supabase automatic preview branches when the team needs hosted,

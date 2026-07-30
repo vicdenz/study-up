@@ -18,7 +18,7 @@ The branch converts the app into a Vercel-ready static SPA while retaining Supab
 | Critical | `chat-with-gemini` fetched arbitrary URLs and buffered them without limits, enabling SSRF and memory exhaustion. | Restricted images to this project's HTTPS Supabase Storage URLs, disallowed redirects, added timeouts, limited requests to four images and 5 MB per image, and streamed with a hard byte cap. |
 | High | The materials bucket was public even though the product claimed private user files. | The hardening migration makes the bucket private. The frontend now generates one-hour signed URLs after RLS-authorized reads. |
 | High | Storage upload/delete policies did not consistently prove assignment ownership. | Replaced the policies with course and assignment ownership checks for insert, select, and delete. |
-| High | 22 dependency advisories were present, including 14 high-severity advisories. | Updated the toolchain and runtime dependencies, replaced the vulnerable router with Wouter, and removed the obsolete Lovable tagger. `npm audit` now reports zero vulnerabilities. |
+| High | 22 dependency advisories were present, including 14 high-severity advisories. | Updated the toolchain and runtime dependencies, replaced the vulnerable router with Wouter, and removed the obsolete Lovable tagger. `pnpm audit` now reports zero vulnerabilities. |
 | High | A duplicate `study_sessions` migration made a clean database replay fail. | Removed the duplicate historical migration and added an idempotent forward hardening migration. |
 | High | Historical migration filenames used a hyphen after the timestamp, so the current Supabase CLI silently skipped the entire application schema. | Renamed every migration to the required `<timestamp>_<name>.sql` format and added an infrastructure invariant plus CI replay from an empty database. |
 | High | Fresh Supabase projects no longer auto-grant new public tables to API roles, so authenticated browser queries failed before RLS evaluation. | Added an explicit least-privilege grant migration: no application-table access for `anon`, CRUD for `authenticated` behind RLS, and administrative access for `service_role`. |
@@ -52,13 +52,13 @@ The branch converts the app into a Vercel-ready static SPA while retaining Supab
 Run:
 
 ```bash
-npm ci
-npm run check
-npm audit
-npm run supabase:start:test
-npm run db:reset
-npm run db:test
-npm run db:lint
+pnpm install --frozen-lockfile
+pnpm check
+pnpm audit
+pnpm supabase:start:test
+pnpm db:reset
+pnpm db:test
+pnpm db:lint
 ```
 
 Expected results:
@@ -67,7 +67,7 @@ Expected results:
 - TypeScript: zero errors with strict mode
 - Vitest: 5 tests passing
 - Vite production build: success
-- npm audit: zero known vulnerabilities
+- pnpm audit: zero known vulnerabilities
 - Playwright: 10 public cases across desktop and mobile Chromium, plus 2
   credential-gated live product cases
 - Supabase migration replay: all 12 migrations apply from an empty Postgres 17 database

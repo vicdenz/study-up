@@ -4,13 +4,13 @@ export const readLocalSupabaseStatus = () => {
   let output;
 
   try {
-    output = execFileSync("npx", ["supabase", "status", "-o", "env"], {
+    output = execFileSync("pnpm", ["exec", "supabase", "status", "-o", "env"], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch {
     throw new Error(
-      "The local Supabase stack is not running. Start Docker, then run `npm run supabase:start`.",
+      "The local Supabase stack is not running. Start Docker, then run `pnpm supabase:start`.",
     );
   }
 

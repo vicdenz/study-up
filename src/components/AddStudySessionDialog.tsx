@@ -21,9 +21,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   course_id: z.string().min(1, 'Please select a course'),
   description: z.string().optional(),
-  scheduled_date: z.date({
-    required_error: 'Please select a date',
-  }),
+  scheduled_date: z.date({ error: 'Please select a date' }),
   scheduled_time: z.string().regex(/^\d{2}:\d{2}$/, 'Please select a time'),
   duration: z.number().min(15, 'Duration must be at least 15 minutes'),
 });
@@ -162,7 +160,7 @@ const AddStudySessionDialog = ({ open, onOpenChange, selectedDate }: AddStudySes
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date < startOfDay(new Date())}
-                        initialFocus
+                        autoFocus
                         className="pointer-events-auto"
                       />
                     </PopoverContent>

@@ -1,0 +1,14 @@
+packages:
+  - "."
+
+engineStrict: true
+preferFrozenLockfile: true
+savePrefix: ""
+strictPeerDependencies: true
+
+# Vite's optional WASM fallback currently declares prerelease emnapi peers even
+# though its stable runtime resolves these versions. Keep the exception narrow.
+peerDependencyRules:
+  allowedVersions:
+    "@emnapi/core": "1.11.1"
+    "@emnapi/runtime": "1.11.1"
