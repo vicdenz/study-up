@@ -1,11 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const configuredWorkers = Number.parseInt(process.env.E2E_WORKERS ?? "", 10);
+const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 
 export default defineConfig({
-  testDir: "./e2e",
-  outputDir: "artifacts/playwright/test-results",
+  testDir: `${repositoryRoot}e2e`,
+  outputDir: `${repositoryRoot}artifacts/playwright/test-results`,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -24,11 +26,17 @@ export default defineConfig({
         ["line"],
         [
           "junit",
-          { outputFile: "artifacts/playwright/junit.xml", includeProjectInTestName: true },
+          {
+            outputFile: `${repositoryRoot}artifacts/playwright/junit.xml`,
+            includeProjectInTestName: true,
+          },
         ],
         [
           "html",
-          { outputFolder: "artifacts/playwright/report", open: "never" },
+          {
+            outputFolder: `${repositoryRoot}artifacts/playwright/report`,
+            open: "never",
+          },
         ],
       ]
     : "list",
@@ -46,6 +54,7 @@ export default defineConfig({
     ? undefined
     : {
         command: "pnpm dev --host 127.0.0.1 --port 4173",
+        cwd: repositoryRoot,
         url: "http://127.0.0.1:4173",
         reuseExistingServer: !process.env.CI,
         env: {
