@@ -56,13 +56,12 @@ if (mode === "local") {
   if (!password || password.length < 8) {
     errors.push("E2E_PASSWORD must contain the dedicated test user's password");
   }
-  if (Boolean(secondaryEmail) !== Boolean(secondaryPassword)) {
+  if (!secondaryEmail || !secondaryPassword) {
     errors.push(
-      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD must be provided together",
+      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD are required for live isolation testing",
     );
   } else if (
-    secondaryEmail &&
-    (!secondaryEmail.includes("@") || (secondaryPassword?.length ?? 0) < 8)
+    !secondaryEmail.includes("@") || secondaryPassword.length < 8
   ) {
     errors.push("Secondary E2E credentials must identify a dedicated test user");
   }

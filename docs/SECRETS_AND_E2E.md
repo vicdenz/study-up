@@ -60,15 +60,16 @@ Gemini network path together.
 
 ## Playwright suites
 
-Install Chromium once:
+Install the three browser engines once:
 
 ```bash
-pnpm exec playwright install chromium
+pnpm exec playwright install chromium firefox webkit
 ```
 
 The public suite starts the local Vite server with inert browser-safe Supabase
 configuration. It covers landing/auth navigation, protected deep-link redirects,
-desktop and mobile Chromium, serious accessibility violations, and horizontal
+desktop Chromium/Firefox/WebKit, Pixel and iPhone profiles, serious
+accessibility violations, offline recovery, visual regression, and horizontal
 overflow:
 
 ```bash
@@ -83,15 +84,13 @@ request. Load `STUDYUP_E2E_PASSWORD` from your secret manager first:
 E2E_BASE_URL=https://your-preview.vercel.app \
 E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
+E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
+E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD" \
 pnpm test:e2e:live --project=chromium
 ```
 
-For the two-user isolation journey, add a second dedicated account:
-
-```bash
-E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
-E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD"
-```
+Both accounts are required by the live configuration validator; the isolation
+journey cannot silently skip in the protected workflow.
 
 The database enforces independent hourly and daily limits for chat and study
 plan generation. A `429` from either function therefore means the current usage
@@ -102,10 +101,11 @@ Do not use a maintainer's personal account. If the live course test fails before
 cleanup, remove the uniquely prefixed `E2E Course ...` record from the test
 account before rerunning.
 
-GitHub Actions runs static, unit, Deno, database, build, and local public
-Chromium gates for branch pushes and pull requests. The manually triggered
+GitHub Actions runs static, unit, Deno, database, bundle/performance, five-profile
+public-browser, and disposable authenticated product-integration gates for
+branch pushes and pull requests. The manually triggered
 **Live product verification**
-workflow accepts a deployment URL and reads `E2E_EMAIL` and `E2E_PASSWORD` from
-the protected `preview` GitHub environment. Run it after Supabase or Vercel
-preview deployment. Do not expose those secrets to untrusted pull-request
-workflows.
+workflow accepts a deployment URL and reads both test accounts from the
+protected `preview` GitHub environment. It makes the real Gemini call. Run it
+after Supabase or Vercel preview deployment. Do not expose those secrets to
+untrusted pull-request workflows.
