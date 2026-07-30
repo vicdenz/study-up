@@ -113,7 +113,7 @@ const Planner = () => {
   };
 
   const handleUpdateAssignment = (data: { id: string; updates: AssignmentUpdate }) => {
-    updateAssignment(data);
+    return updateAssignment(data);
   };
 
   const handleCompleteStudySession = (session: StudySessionWithCourse) => {
@@ -162,6 +162,7 @@ const Planner = () => {
                     size="icon"
                     onClick={handlePreviousWeek}
                     className="h-8 w-8"
+                    aria-label="Previous week"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -170,6 +171,7 @@ const Planner = () => {
                     size="icon"
                     onClick={handleNextWeek}
                     className="h-8 w-8"
+                    aria-label="Next week"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>

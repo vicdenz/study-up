@@ -31,6 +31,8 @@ if (mode === "local") {
   const baseUrl = process.env.E2E_BASE_URL;
   const email = process.env.E2E_EMAIL;
   const password = process.env.E2E_PASSWORD;
+  const secondaryEmail = process.env.E2E_SECONDARY_EMAIL;
+  const secondaryPassword = process.env.E2E_SECONDARY_PASSWORD;
 
   if (!baseUrl) {
     errors.push("E2E_BASE_URL is required");
@@ -53,6 +55,16 @@ if (mode === "local") {
   }
   if (!password || password.length < 8) {
     errors.push("E2E_PASSWORD must contain the dedicated test user's password");
+  }
+  if (Boolean(secondaryEmail) !== Boolean(secondaryPassword)) {
+    errors.push(
+      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD must be provided together",
+    );
+  } else if (
+    secondaryEmail &&
+    (!secondaryEmail.includes("@") || (secondaryPassword?.length ?? 0) < 8)
+  ) {
+    errors.push("Secondary E2E credentials must identify a dedicated test user");
   }
 
   if (errors.length > 0) fail(errors);

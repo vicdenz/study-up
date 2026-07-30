@@ -228,6 +228,7 @@ const Notebook = () => {
                               size="sm"
                               className="text-red-500 hover:text-red-700"
                               disabled={isDeleting}
+                              aria-label={`Delete ${note.title}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
