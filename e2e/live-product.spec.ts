@@ -80,7 +80,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(
-      page.getByRole("heading", { name: /Good (morning|afternoon|evening)/ }),
+      page.getByRole("heading", { name: "Welcome back!" }),
     ).toBeVisible();
 
     await signOut(page);

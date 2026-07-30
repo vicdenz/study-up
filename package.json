@@ -25,7 +25,7 @@
     "test:e2e:public:ci": "playwright test --config config/playwright.config.ts --grep @public",
     "test:e2e:live": "playwright test --config config/playwright.config.ts --grep @authenticated",
     "test:e2e:live:ci": "node scripts/validate-e2e-env.mjs live && playwright test --config config/playwright.config.ts --grep @authenticated --project=chromium",
-    "test:e2e:performance": "pnpm build && E2E_USE_PREVIEW=true playwright test --config config/playwright.config.ts --grep @performance --project=chromium",
+    "test:e2e:performance": "VITE_SUPABASE_URL=https://example.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=test-publishable-key pnpm build && E2E_USE_PREVIEW=true playwright test --config config/playwright.config.ts --grep @performance --project=chromium",
     "test:e2e:report": "playwright show-report artifacts/playwright/report",
     "test:e2e:local": "node --env-file=.env.e2e.local ./node_modules/@playwright/test/cli.js test --config config/playwright.config.ts --grep 'creates and deletes a course' --project=chromium",
     "test:e2e:integration": "node --env-file=.env.e2e.local ./node_modules/@playwright/test/cli.js test --config config/playwright.config.ts --grep '@authenticated|@local-email' --grep-invert @gemini --project=chromium",
