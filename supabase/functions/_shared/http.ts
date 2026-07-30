@@ -1,4 +1,7 @@
-import { createClient } from "npm:@supabase/supabase-js@2.111.0";
+import {
+  createClient,
+  type SupabaseClient,
+} from "npm:@supabase/supabase-js@2.111.0";
 
 export class HttpError extends Error {
   constructor(
@@ -65,6 +68,33 @@ export const requireUserClient = async (request: Request) => {
   }
 
   return { supabase, user, supabaseUrl };
+};
+
+export const enforceAiQuota = async (
+  supabase: SupabaseClient,
+  functionName: "chat-with-gemini" | "generate-study-plan",
+) => {
+  const { data, error } = await supabase
+    .rpc("consume_ai_quota", { p_function_name: functionName })
+    .single();
+  const quota = data as {
+    allowed?: boolean;
+    remaining?: number;
+    reset_at?: string;
+  } | null;
+
+  if (error || !quota || typeof quota.allowed !== "boolean") {
+    console.error("Could not enforce AI quota", error);
+    throw new HttpError(503, "AI usage limits are temporarily unavailable");
+  }
+  if (!quota.allowed) {
+    throw new HttpError(
+      429,
+      `AI request limit reached. Try again after ${quota.reset_at ?? "the current usage window"}`,
+    );
+  }
+
+  return quota;
 };
 
 export const parseJsonObject = async (request: Request) => {

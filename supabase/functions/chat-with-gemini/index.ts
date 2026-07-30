@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   corsHeaders,
+  enforceAiQuota,
   handleError,
   HttpError,
   jsonResponse,
@@ -115,7 +116,7 @@ serve(async (request) => {
   }
 
   try {
-    const { supabaseUrl } = await requireUserClient(request);
+    const { supabase, supabaseUrl } = await requireUserClient(request);
     const body = await parseJsonObject(request);
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const context = typeof body.context === "string" ? body.context.trim() : "";
@@ -142,6 +143,7 @@ serve(async (request) => {
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not configured");
+    await enforceAiQuota(supabase, "chat-with-gemini");
 
     const parts: GeminiPart[] = [{
       text: context

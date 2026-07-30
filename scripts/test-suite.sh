@@ -29,8 +29,8 @@ verify_toolchain() {
   local node_major
   local expected_pnpm
   local actual_pnpm
-  node_major="$(node -p 'process.versions.node.split(\".\")[0]')"
-  expected_pnpm="$(node -p 'require(\"./package.json\").packageManager.split(\"@\")[1]')"
+  node_major="$(node -p 'process.versions.node.split(".")[0]')"
+  expected_pnpm="$(node -p 'require("./package.json").packageManager.split("@")[1]')"
   actual_pnpm="$(pnpm --version)"
 
   [[ "$node_major" == "22" ]] ||
@@ -82,6 +82,7 @@ Modes:
   bootstrap   Install frozen dependencies and the matching Chromium binary.
   quick       Lint, type-check, unit test, verify infrastructure, and build.
   unit        Run unit tests with enforced coverage and CI-ready reports.
+  functions   Run isolated Edge Function request and quota tests with Deno.
   public      Run public desktop and mobile Playwright product tests.
   database    Start an owned test stack, replay migrations, run pgTAP, clean up.
   local       Validate local credentials and run authenticated CRUD tests.
@@ -120,6 +121,10 @@ case "$MODE" in
   unit)
     pnpm test:unit:coverage
     ;;
+  functions)
+    require_command deno
+    pnpm test:functions
+    ;;
   public)
     pnpm test:e2e:public:ci "$@"
     ;;
@@ -143,12 +148,16 @@ case "$MODE" in
   ci)
     pnpm test:ci:static
     pnpm test:ci:unit
+    require_command deno
+    pnpm test:ci:functions
     pnpm test:ci:e2e "$@"
     ;;
   all)
     pnpm check
     pnpm audit --audit-level=high
     pnpm test:unit:coverage
+    require_command deno
+    pnpm test:ci:functions
     pnpm test:e2e:public:ci "$@"
     run_database_suite
     ;;
