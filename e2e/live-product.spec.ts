@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import type { Download } from "@playwright/test";
 import { expect, test } from "./test";
 
 const email = process.env.E2E_EMAIL;
@@ -55,7 +56,16 @@ async function deleteCourseIfPresent(page: Page, courseName: string) {
   }
 }
 
-test.describe("@live authenticated product journeys", () => {
+async function readDownload(download: Download) {
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+test.describe("@authenticated authenticated product journeys", () => {
   test.describe.configure({ mode: "serial" });
   test.skip(
     !hasLiveConfiguration,
@@ -234,6 +244,15 @@ test.describe("@live authenticated product journeys", () => {
         page.getByRole("button", { name: `Download ${materialTitle}` }),
       ).toBeEnabled();
 
+      const downloadPromise = page.waitForEvent("download");
+      await page
+        .getByRole("button", { name: `Download ${materialTitle}` })
+        .click();
+      const download = await downloadPromise;
+      expect((await readDownload(download)).toString("utf8")).toBe(
+        "Private StudyUp E2E material",
+      );
+
       await page.getByRole("button", { name: `Delete ${materialTitle}` }).click();
       await expect(page.getByText(materialTitle, { exact: true })).toHaveCount(0);
     } finally {
@@ -311,7 +330,40 @@ test.describe("@live authenticated product journeys", () => {
     ).toHaveCount(0);
   });
 
-  test("Gemini tutor returns a live model response", async ({ page }) => {
+  test("Gemini tutor honors the browser-to-function response contract", async ({
+    page,
+  }) => {
+    await signIn(page);
+    let capturedBody: unknown;
+    let authorization: string | undefined;
+    await page.route("**/functions/v1/chat-with-gemini", async (route) => {
+      const request = route.request();
+      capturedBody = request.postDataJSON();
+      authorization = request.headers().authorization;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          response: "STUDYUP_CONTRACT_OK",
+          model: "deterministic-test-provider",
+        }),
+      });
+    });
+    await page.goto("/ai-tutor");
+
+    await page
+      .getByPlaceholder(/Ask your AI tutor/)
+      .fill("Explain the chain rule.");
+    await page.getByRole("button", { name: "Send message" }).click();
+
+    await expect(
+      page.getByText("STUDYUP_CONTRACT_OK", { exact: true }),
+    ).toBeVisible();
+    expect(capturedBody).toMatchObject({ message: "Explain the chain rule." });
+    expect(authorization).toMatch(/^Bearer /);
+  });
+
+  test("@gemini Gemini tutor returns a live model response", async ({ page }) => {
     await signIn(page);
     await page.goto("/ai-tutor");
 
