@@ -18,7 +18,7 @@ Vercel hosts the browser application. Supabase remains the stateful backend and 
 Requirements:
 
 - Node.js 22 (`nvm use` reads the committed `.nvmrc`)
-- Corepack with pnpm 11.18.0 (`corepack enable` if `pnpm` is unavailable)
+- Corepack with pnpm 10.34.5 (`corepack enable` if `pnpm` is unavailable)
 - Docker Desktop for the local Supabase-compatible test stack
 - A Gemini API key
 
