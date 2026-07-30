@@ -108,6 +108,9 @@ pnpm supabase:stop
 
 ## Test commands
 
+The canonical suite and CI command reference is
+[`TESTING.md`](TESTING.md). The commands below are the common shortcuts.
+
 ### Fast gate
 
 ```bash

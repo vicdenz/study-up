@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 
 const fail = (message) => {
   throw new Error(`Infrastructure validation failed: ${message}`);
@@ -13,6 +13,28 @@ if (packageManifest.packageManager !== "pnpm@11.18.0") {
 }
 if (!pnpmWorkspace.includes('packages:\n  - "."')) {
   fail("pnpm-workspace.yaml must declare the project root.");
+}
+if (!existsSync("pnpm-lock.yaml") || existsSync("package-lock.json")) {
+  fail("The repository must use only the committed pnpm lockfile.");
+}
+for (const sectionName of ["dependencies", "devDependencies"]) {
+  for (const [name, version] of Object.entries(
+    packageManifest[sectionName] ?? {},
+  )) {
+    if (/^[~^]/.test(version)) {
+      fail(`${sectionName}.${name} must use an exact version.`);
+    }
+  }
+}
+for (const requiredScript of [
+  "test:ci:static",
+  "test:ci:unit",
+  "test:ci:e2e",
+  "test:suite",
+]) {
+  if (!packageManifest.scripts?.[requiredScript]) {
+    fail(`package.json is missing the ${requiredScript} test entry point.`);
+  }
 }
 if (vercel.framework !== "vite") fail("vercel.json must use the Vite framework.");
 if (vercel.installCommand !== "pnpm install --frozen-lockfile") {

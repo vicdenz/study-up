@@ -14,6 +14,7 @@ permissions:
 jobs:
   live-product:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: preview
     steps:
       - uses: actions/checkout@v6
@@ -25,16 +26,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: Verify authenticated CRUD and Gemini
-        run: pnpm test:e2e:live --project=chromium
+        run: pnpm test:e2e:live:ci
         env:
           E2E_BASE_URL: ${{ inputs.deployment_url }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Upload Playwright reports and failure evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
         with:
           name: live-playwright-report
-          path: playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7
+          path: artifacts/playwright/
+          if-no-files-found: error
+          retention-days: 14

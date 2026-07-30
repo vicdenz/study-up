@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_MATERIAL_FILE_SIZE,
+  errorMessage,
   safeStorageFileName,
   validateMaterialFile,
 } from "./material-validation";
@@ -25,6 +26,15 @@ describe("material file validation", () => {
       validateMaterialFile(new File(["notes"], "notes.txt")),
     ).not.toThrow();
   });
+
+  it("accepts a file exactly at the size limit", () => {
+    const maximumSize = new File(
+      [new Uint8Array(MAX_MATERIAL_FILE_SIZE)],
+      "maximum.pdf",
+    );
+
+    expect(() => validateMaterialFile(maximumSize)).not.toThrow();
+  });
 });
 
 describe("safeStorageFileName", () => {
@@ -36,5 +46,23 @@ describe("safeStorageFileName", () => {
 
   it("provides a fallback name", () => {
     expect(safeStorageFileName("💥")).toBe("material");
+  });
+
+  it("normalizes Unicode and limits generated names to 120 characters", () => {
+    const safeName = safeStorageFileName(`Résumé-${"a".repeat(150)}.pdf`);
+
+    expect(safeName).toMatch(/^[a-zA-Z0-9._-]+$/);
+    expect(safeName).toHaveLength(120);
+    expect(safeName).toMatch(/\.pdf$/);
+  });
+});
+
+describe("errorMessage", () => {
+  it("returns the message from an Error", () => {
+    expect(errorMessage(new Error("Upload failed"))).toBe("Upload failed");
+  });
+
+  it("does not expose arbitrary thrown values", () => {
+    expect(errorMessage({ secret: "not-a-message" })).toBe("Unknown error");
   });
 });

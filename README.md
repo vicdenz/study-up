@@ -63,18 +63,19 @@ generated test user, follow
 ## Quality gates
 
 ```bash
-pnpm check
-pnpm test:e2e:public
-pnpm supabase:start:test
-pnpm db:reset
-pnpm db:test
-pnpm db:lint
+pnpm test:suite quick
+pnpm test:suite unit
+pnpm test:suite public
+pnpm test:suite database
 ```
 
-The combined check runs ESLint, strict TypeScript (including the Playwright
-suite), unit tests, and the production build. The public browser suite covers
-navigation, auth boundaries, desktop/mobile Chromium, accessibility, and
-responsive overflow. `pnpm audit` should also report zero known vulnerabilities.
+The quick gate runs ESLint, strict TypeScript, unit tests, infrastructure
+verification, a production build, and an audit. The browser suite covers
+navigation, auth boundaries, desktop/mobile Chromium, accessibility, browser
+errors, server failures, and responsive overflow.
+
+See [docs/TESTING.md](docs/TESTING.md) for the complete local/CI command matrix,
+coverage reports, database cleanup behavior, and deployed-product tests.
 
 Live product tests require a deployed URL and a dedicated test account. They
 exercise course CRUD and make a real authenticated Gemini request. See

@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 
 test.describe("@public public and unauthenticated journeys", () => {
   test("landing page exposes the primary product actions", async ({ page }) => {
@@ -27,6 +27,16 @@ test.describe("@public public and unauthenticated journeys", () => {
       "minlength",
       "8",
     );
+    await page.getByRole("button", { name: "Show password" }).click();
+    await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute(
+      "type",
+      "text",
+    );
+    await page.getByRole("button", { name: "Hide password" }).click();
+    await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute(
+      "type",
+      "password",
+    );
     await page.getByRole("button", { name: "Sign up" }).click();
 
     await expect(
@@ -37,6 +47,22 @@ test.describe("@public public and unauthenticated journeys", () => {
     await expect(
       page.getByRole("button", { name: "Create Account" }),
     ).toBeVisible();
+  });
+
+  test("primary actions are reachable by keyboard", async ({ page }) => {
+    await page.goto("/");
+
+    const loginButton = page.getByRole("button", { name: "Login" });
+    for (let tabPresses = 0; tabPresses < 5; tabPresses += 1) {
+      if (await loginButton.evaluate((element) => element === document.activeElement)) {
+        break;
+      }
+      await page.keyboard.press("Tab");
+    }
+
+    await expect(loginButton).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/auth$/);
   });
 
   test("protected deep links redirect to authentication", async ({ page }) => {

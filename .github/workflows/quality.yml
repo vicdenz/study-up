@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  static-and-unit:
+  static-analysis:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -20,11 +25,35 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check
+      - run: pnpm test:ci:static
       - run: pnpm audit
 
-  browser-smoke:
+  unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:ci:unit
+      - name: Upload unit coverage and JUnit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: unit-test-artifacts
+          path: |
+            artifacts/coverage/
+            artifacts/vitest/
+          if-no-files-found: error
+          retention-days: 14
+
+  browser-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -34,18 +63,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e:public --project=chromium
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - run: pnpm test:ci:e2e
+      - name: Upload Playwright reports and failure evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
         with:
           name: public-playwright-report
-          path: playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7
+          path: artifacts/playwright/
+          if-no-files-found: error
+          retention-days: 14
 
   database:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -54,14 +84,5 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Start disposable Supabase stack
-        run: pnpm supabase:start:test
-      - name: Replay every migration and seed
-        run: pnpm db:reset
-      - name: Run pgTAP database and RLS tests
-        run: pnpm db:test
-      - name: Lint database schema
-        run: pnpm db:lint
-      - name: Stop disposable Supabase stack
-        if: always()
-        run: pnpm supabase:stop --no-backup
+      - name: Replay migrations and run schema/RLS tests
+        run: pnpm test:suite database
