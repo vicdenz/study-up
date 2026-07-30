@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Route, Switch } from "@/lib/router";
 import AuthWrapper from "@/components/AuthWrapper";
+import NetworkStatus from "@/components/NetworkStatus";
 
 const AITutor = lazy(() => import("./pages/AITutor"));
 const AssignmentPage = lazy(() => import("./pages/AssignmentPage"));
@@ -44,6 +45,7 @@ const RouteFallback = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <NetworkStatus />
       <Toaster />
       <Sonner />
       <AuthWrapper>
