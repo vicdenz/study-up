@@ -20,7 +20,9 @@ export const extractMaterialText = async (file: File): Promise<string | null> =>
     return null;
   }
 
-  const document = await pdfjs.getDocument(new Uint8Array(await file.arrayBuffer())).promise;
+  const document = await pdfjs.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+  }).promise;
 
   if (document.numPages > MAX_PDF_PAGES) {
     throw new Error(`PDFs are limited to ${MAX_PDF_PAGES} pages.`);

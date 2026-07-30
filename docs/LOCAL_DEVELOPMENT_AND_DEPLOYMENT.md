@@ -11,14 +11,15 @@ These control-plane steps require a human project owner:
    ```bash
    nvm install
    nvm use
-   npm ci
+   corepack enable
+   pnpm install --frozen-lockfile
    ```
 
 3. Authenticate and link the Supabase CLI:
 
    ```bash
-   npx supabase login
-   npx supabase link --project-ref samjothygejcrgxizdra
+   pnpm exec supabase login
+   pnpm exec supabase link --project-ref samjothygejcrgxizdra
    ```
 
 4. Confirm the production database major version with `show server_version;`.
@@ -26,7 +27,9 @@ These control-plane steps require a human project owner:
    committed local setting before relying on migration replay.
 5. Rotate and verify Gemini using
    [`SECRETS_AND_E2E.md`](SECRETS_AND_E2E.md).
-6. Connect the GitHub repository to Vercel, set Node.js 22, and configure only
+6. Connect the GitHub repository to Vercel, set Node.js 22, add the non-secret
+   `ENABLE_EXPERIMENTAL_COREPACK=1` variable to Development, Preview, and
+   Production, and configure only
    these browser-safe variables for Preview and Production:
 
    ```dotenv
@@ -52,14 +55,14 @@ This is the shortest path when you only need the UI:
 
 ```bash
 nvm use
-npm ci
+pnpm install --frozen-lockfile
 cp .env.example .env.local
 ```
 
 Fill in the hosted project's public URL and publishable key, then:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open <http://127.0.0.1:8080>.
@@ -79,11 +82,11 @@ cp supabase/.env.example supabase/.env.local
 Replace the placeholder in `supabase/.env.local`, then start and initialize:
 
 ```bash
-npm run supabase:start
-npm run db:reset
-npm run env:local
-npm run e2e:user:local
-npm run dev:local
+pnpm supabase:start
+pnpm db:reset
+pnpm env:local
+pnpm e2e:user:local
+pnpm dev:local
 ```
 
 Open:
@@ -96,11 +99,11 @@ Open:
 `e2e:user:local` creates or refreshes a localhost-only user and writes private
 credentials to `.env.e2e.local`. Both files are ignored by Git.
 
-If you do not need local AI functions, run `npm run dev` after `env:local`
+If you do not need local AI functions, run `pnpm dev` after `env:local`
 instead of `dev:local`. Stop the stack without deleting its data:
 
 ```bash
-npm run supabase:stop
+pnpm supabase:stop
 ```
 
 ## Test commands
@@ -108,8 +111,8 @@ npm run supabase:stop
 ### Fast gate
 
 ```bash
-npm run check
-npm audit
+pnpm check
+pnpm audit
 ```
 
 This runs lint, application and Playwright type-checking, unit tests,
@@ -120,13 +123,13 @@ infrastructure invariant checks, and the production build.
 Install Chromium once:
 
 ```bash
-npx playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 Then run:
 
 ```bash
-npm run test:e2e:public
+pnpm test:e2e:public
 ```
 
 This suite starts Vite automatically and does not require a real backend.
@@ -136,10 +139,10 @@ This suite starts Vite automatically and does not require a real backend.
 With Docker running:
 
 ```bash
-npm run supabase:start:test
-npm run db:reset
-npm run db:test
-npm run db:lint
+pnpm supabase:start:test
+pnpm db:reset
+pnpm db:test
+pnpm db:lint
 ```
 
 `db:reset` destroys only the local test database, replays every committed
@@ -152,14 +155,14 @@ production project.
 After `supabase:start`, `env:local`, and `e2e:user:local`:
 
 ```bash
-npm run test:e2e:local
+pnpm test:e2e:local
 ```
 
 That performs real local Auth and course CRUD. For the complete local Gemini
-journey, keep `npm run supabase:functions` running in another terminal and run:
+journey, keep `pnpm supabase:functions` running in another terminal and run:
 
 ```bash
-npm run test:e2e:local:full
+pnpm test:e2e:local:full
 ```
 
 ### Deployed product tests
@@ -170,7 +173,7 @@ Use the **Live product verification** GitHub workflow, or run:
 E2E_BASE_URL=https://your-preview.vercel.app \
 E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
-npm run test:e2e:live -- --project=chromium
+pnpm test:e2e:live --project=chromium
 ```
 
 ## Deploy Supabase changes
@@ -178,13 +181,13 @@ npm run test:e2e:live -- --project=chromium
 Review before changing a hosted database:
 
 ```bash
-npm run supabase:deploy:check
+pnpm supabase:deploy:check
 ```
 
 After review:
 
 ```bash
-npm run supabase:deploy
+pnpm supabase:deploy
 ```
 
 The second command applies pending migrations and deploys both authenticated Edge
@@ -211,16 +214,16 @@ source are excluded from frontend uploads through `.vercelignore`.
 Local CLI equivalents are:
 
 ```bash
-npm run vercel:link
-npm run vercel:pull
-npm run vercel:build
-npm run deploy:preview
+pnpm vercel:link
+pnpm vercel:pull
+pnpm vercel:build
+pnpm deploy:preview
 ```
 
 Production is always explicit:
 
 ```bash
-npm run deploy:production
+pnpm deploy:production
 ```
 
 ## Hosted testing database option

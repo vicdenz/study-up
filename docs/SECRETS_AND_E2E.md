@@ -15,7 +15,7 @@ credentials, or a service-role key.
 For local development, copy `supabase/.env.example` to
 `supabase/.env.local`. That ignored file is read only by locally served Edge
 Functions. The browser continues to receive only the local public key generated
-by `npm run env:local`.
+by `pnpm env:local`.
 
 ## Rotate and verify Gemini
 
@@ -63,7 +63,7 @@ Gemini network path together.
 Install Chromium once:
 
 ```bash
-npx playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 The public suite starts the local Vite server with inert browser-safe Supabase
@@ -72,7 +72,7 @@ desktop and mobile Chromium, serious accessibility violations, and horizontal
 overflow:
 
 ```bash
-npm run test:e2e:public
+pnpm test:e2e:public
 ```
 
 The live suite must target a deployed preview and a dedicated, low-privilege test
@@ -83,7 +83,7 @@ request. Load `STUDYUP_E2E_PASSWORD` from your secret manager first:
 E2E_BASE_URL=https://your-preview.vercel.app \
 E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
-npm run test:e2e:live -- --project=chromium
+pnpm test:e2e:live --project=chromium
 ```
 
 Do not use a maintainer's personal account. If the live course test fails before

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Brain, Linkedin, Github, X } from "lucide-react";
+import { Brain, X } from "lucide-react";
 import { Link, useNavigate } from "@/lib/router";
 
 const LandingPage = () => {
@@ -60,13 +60,13 @@ const LandingPage = () => {
         </div>
         <div className="flex items-center space-x-4">
             <a aria-label="LinkedIn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <Linkedin className="h-5 w-5" />
+                <span aria-hidden="true" className="font-semibold">in</span>
             </a>
             <a aria-label="X" href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 <X className="h-5 w-5" />
             </a>
             <a aria-label="GitHub" href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <Github className="h-5 w-5" />
+                <span aria-hidden="true" className="font-semibold">GH</span>
             </a>
         </div>
     </footer>

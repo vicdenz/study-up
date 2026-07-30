@@ -23,7 +23,10 @@ test.describe("@public public and unauthenticated journeys", () => {
     await page.goto("/auth");
 
     await expect(page.getByLabel("Email")).toHaveAttribute("type", "email");
-    await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
+    await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute(
+      "minlength",
+      "8",
+    );
     await page.getByRole("button", { name: "Sign up" }).click();
 
     await expect(

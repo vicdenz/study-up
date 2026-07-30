@@ -5,9 +5,20 @@ const fail = (message) => {
 };
 
 const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
+const packageManifest = JSON.parse(readFileSync("package.json", "utf8"));
+const pnpmWorkspace = readFileSync("pnpm-workspace.yaml", "utf8");
+
+if (packageManifest.packageManager !== "pnpm@11.18.0") {
+  fail("package.json must pin the approved pnpm release.");
+}
+if (!pnpmWorkspace.includes('packages:\n  - "."')) {
+  fail("pnpm-workspace.yaml must declare the project root.");
+}
 if (vercel.framework !== "vite") fail("vercel.json must use the Vite framework.");
-if (vercel.installCommand !== "npm ci") fail("Vercel install must be reproducible.");
-if (vercel.buildCommand !== "npm run build") fail("Unexpected Vercel build command.");
+if (vercel.installCommand !== "pnpm install --frozen-lockfile") {
+  fail("Vercel install must use pnpm's frozen lockfile.");
+}
+if (vercel.buildCommand !== "pnpm build") fail("Unexpected Vercel build command.");
 if (vercel.outputDirectory !== "dist") fail("Vercel output directory must be dist.");
 if (
   !vercel.rewrites?.some(

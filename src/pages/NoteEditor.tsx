@@ -36,7 +36,7 @@ const NoteEditor = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const { notes, createNote, updateNote, isCreating, isUpdating } = useNotes();
   const { courses } = useCourses();
