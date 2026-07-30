@@ -1,0 +1,93 @@
+# Secrets verification and browser product testing
+
+## What can and cannot be verified locally
+
+The repository contains no secret values, which is the correct state. Secret
+metadata and live Gemini behavior can only be verified after authenticating the
+Supabase CLI and providing a dedicated test account. A successful frontend build
+does not prove that `GEMINI_API_KEY` is present or that the configured model is
+available.
+
+The Supabase project reference in `supabase/config.toml` is
+`samjothygejcrgxizdra`. Never commit access tokens, Gemini keys, test-user
+credentials, or a service-role key.
+
+## Rotate and verify Gemini
+
+Authenticate and inspect secret metadata. `supabase secrets list` shows names and
+digests, not the secret values:
+
+```bash
+supabase login
+supabase secrets list --project-ref samjothygejcrgxizdra
+```
+
+Rotate the key without writing it to a repository file:
+
+```bash
+read -s "GEMINI_KEY?New Gemini API key: "
+supabase secrets set --project-ref samjothygejcrgxizdra \
+  GEMINI_API_KEY="$GEMINI_KEY" \
+  GEMINI_MODEL=gemini-3.6-flash
+unset GEMINI_KEY
+```
+
+Set the exact Vercel preview and production origins, plus local development:
+
+```bash
+supabase secrets set --project-ref samjothygejcrgxizdra \
+  ALLOWED_ORIGINS=https://preview.example.com,https://studyup.example.com,http://localhost:8080
+```
+
+Deploy the audited function code and inspect logs:
+
+```bash
+supabase functions deploy chat-with-gemini --project-ref samjothygejcrgxizdra
+supabase functions deploy generate-study-plan --project-ref samjothygejcrgxizdra
+supabase functions list --project-ref samjothygejcrgxizdra
+```
+
+The definitive Gemini check is the live Playwright test below. It signs in,
+invokes `chat-with-gemini` through the real UI, and requires an exact model
+response. That validates the frontend configuration, Supabase Auth, Edge
+Function deployment, origin allowlist, `GEMINI_API_KEY`, configured model, and
+Gemini network path together.
+
+## Playwright suites
+
+Install Chromium once:
+
+```bash
+npx playwright install chromium
+```
+
+The public suite starts the local Vite server with inert browser-safe Supabase
+configuration. It covers landing/auth navigation, protected deep-link redirects,
+desktop and mobile Chromium, serious accessibility violations, and horizontal
+overflow:
+
+```bash
+npm run test:e2e:public
+```
+
+The live suite must target a deployed preview and a dedicated, low-privilege test
+user. It creates and removes one uniquely named course and makes a real Gemini
+request. Load `STUDYUP_E2E_PASSWORD` from your secret manager first:
+
+```bash
+E2E_BASE_URL=https://your-preview.vercel.app \
+E2E_EMAIL=studyup-e2e@example.com \
+E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
+npm run test:e2e:live -- --project=chromium
+```
+
+Do not use a maintainer's personal account. If the live course test fails before
+cleanup, remove the uniquely prefixed `E2E Course ...` record from the test
+account before rerunning.
+
+GitHub Actions runs the static/unit/build gate and local public Chromium smoke
+suite for each pull request. The manually triggered **Live product verification**
+workflow accepts a deployment URL and reads `E2E_EMAIL` and `E2E_PASSWORD` from
+the protected `preview` GitHub environment. Run it after Supabase or Vercel
+preview deployment. Do not expose those secrets to untrusted pull-request
+workflows.

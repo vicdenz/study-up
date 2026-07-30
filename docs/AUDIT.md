@@ -32,7 +32,9 @@ The branch converts the app into a Vercel-ready static SPA while retaining Supab
 | Medium | Study-session creation discarded or obscured the selected time and closed before persistence completed. | Added a time field, preserved selected slot time, allowed today, and await creation before closing. |
 | Medium | Direct Vercel navigation to routes such as `/courses/:id` would 404. | Added the documented Vite SPA rewrite in `vercel.json`. |
 | Medium | The initial JavaScript bundle was about 1.3 MB minified. | Lazy-loaded every route. The entry chunk is now about 36 KB minified; large feature libraries load only on the pages that use them. |
-| Medium | Type safety was disabled and CI-equivalent commands did not type-check or test. | Enabled strict TypeScript, unused-code and fallthrough checks; removed explicit `any`; added Vitest and a single `npm run check` gate. |
+| Medium | Type safety was disabled and CI-equivalent commands did not type-check or test. | Enabled strict TypeScript, unused-code and fallthrough checks; removed explicit `any`; added Vitest, typed Playwright tests, and CI quality gates. |
+| Medium | Course deletion removed database records but left uploaded course and assignment files in Storage. | Collect and delete owned Storage objects before cascading database deletion; surface lookup or Storage failures instead of silently orphaning files. |
+| Medium | Course creation dialogs closed immediately even when persistence failed. | Switched the course mutation to an awaited promise and keep the form open when the operation fails. |
 | Low | Dead prototype pages/components and obsolete Lovable metadata remained. | Removed unreachable code and replaced generated social/author metadata. |
 | Low | Material action controls had broken `asChild` semantics and weak accessible names. | Restored actual buttons, added labels and disabled states, and opened new tabs with `noopener,noreferrer`. |
 
@@ -60,6 +62,8 @@ Expected results:
 - Vitest: 5 tests passing
 - Vite production build: success
 - npm audit: zero known vulnerabilities
+- Playwright: 10 public cases across desktop and mobile Chromium, plus 2
+  credential-gated live product cases
 
 ## Residual risks and follow-up
 
@@ -67,7 +71,9 @@ These do not block the frontend migration, but should be completed before a larg
 
 1. Add per-user AI quotas/rate limits and budget alerts. Authentication prevents anonymous abuse but does not cap a signed-in user's Gemini spend.
 2. Add integration tests against a disposable local Supabase stack for RLS, migrations, Storage, Auth redirects, and Edge Functions. Unit/static/build checks cannot prove deployed project configuration.
-3. Add browser E2E tests for sign-up, course/assignment CRUD, uploads, note autosave, planner interactions, and AI error states.
+3. Expand the browser suite from its public/auth/course/Gemini baseline to cover
+   sign-up confirmation, assignment CRUD, uploads, note autosave, planner
+   interactions, cross-user isolation, and AI error states.
 4. Add production monitoring for frontend exceptions, Edge Function latency/errors, database health, storage growth, and Gemini spend.
 5. Make activity creation transactional with the corresponding CRUD mutation if activity completeness becomes a product requirement.
 6. Complete keyboard/touch interaction work for the drag-based weekly calendar and run a formal WCAG 2.2 AA audit.

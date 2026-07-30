@@ -195,7 +195,7 @@ const AITutor = () => {
               <CardHeader>
                 <CardTitle className="flex items-center flex-wrap">
                   <Brain className="h-5 w-5 mr-2" />
-                  Chat with AI Tutor (Powered by Gemini 2.0 Flash)
+                  Chat with AI Tutor (Powered by Gemini)
                   {locationState?.courseName && (
                     <span className="ml-2 text-sm font-normal text-gray-500">
                       - {locationState.courseName}
@@ -341,6 +341,7 @@ const AITutor = () => {
                     className="flex-1"
                   />
                   <Button
+                    aria-label="Send message"
                     onClick={handleSendMessage}
                     disabled={isLoading || !inputMessage.trim()}
                   >

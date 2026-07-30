@@ -110,6 +110,11 @@ Use two isolated test users.
 
 Exit criteria: no severity-1/2 defects, no cross-user access, and all critical journeys pass in supported browsers.
 
+The automated baseline is documented in
+[`SECRETS_AND_E2E.md`](SECRETS_AND_E2E.md). Run the public suite in pull requests
+and the credential-gated live suite against the preview after Supabase functions
+and secrets are deployed.
+
 ## Phase 4: production and DNS cutover
 
 Owner: deployment maintainer  
@@ -138,7 +143,7 @@ Frontend rollback is independent of the database:
 ## Post-migration backlog
 
 - Add GitHub branch protection requiring `npm run check`.
-- Add local-Supabase integration tests and browser E2E tests.
+- Expand the Playwright baseline and add disposable local-Supabase integration tests.
 - Add AI quotas, spend alerts, and application monitoring.
 - Add a production Open Graph image using the final canonical domain.
 - Remove the Lovable deployment only after the agreed retention window.
