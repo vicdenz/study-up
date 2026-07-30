@@ -6,6 +6,10 @@ import { BookOpen, Target } from 'lucide-react';
 import type { AssignmentWithCourse } from '@/hooks/useAssignments';
 import type { CourseWithStats } from '@/hooks/useCourses';
 import type { StudySessionWithCourse } from '@/hooks/useStudySessions';
+import {
+  isCalendarArrowKey,
+  nextCalendarCell,
+} from '@/lib/calendar-navigation';
 
 type PlannerEvent = AssignmentWithCourse | StudySessionWithCourse;
 type CalendarEvent =
@@ -94,6 +98,38 @@ const TimeGridCalendar = ({
     setDragEnd(null);
   };
 
+  const selectSingleSlot = (
+    dayIndex: number,
+    hour: number,
+    element: HTMLElement,
+  ) => {
+    if (!onTimeSlotSelect) return;
+    const startTime = addHours(startOfDay(weekDays[dayIndex]), hour);
+    onTimeSlotSelect(startTime, addHours(startTime, 1), element);
+  };
+
+  const handleSlotKeyDown = (
+    event: React.KeyboardEvent<HTMLElement>,
+    dayIndex: number,
+    hour: number,
+  ) => {
+    if (isCalendarArrowKey(event.key)) {
+      event.preventDefault();
+      const next = nextCalendarCell({ day: dayIndex, hour }, event.key);
+      calendarRef.current
+        ?.querySelector<HTMLElement>(
+          `[data-calendar-day="${next.day}"][data-calendar-hour="${next.hour}"]`,
+        )
+        ?.focus();
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectSingleSlot(dayIndex, hour, event.currentTarget);
+    }
+  };
+
   const handleMouseLeave = (event: React.MouseEvent) => {
     // Only end drag if we're leaving the calendar entirely
     const relatedTarget = event.relatedTarget as Node | null;
@@ -176,16 +212,18 @@ const TimeGridCalendar = ({
       <div className="grid grid-cols-8 border-b bg-gray-50 sticky top-0 z-10 flex-shrink-0">
         <div className="p-2 text-sm font-medium text-gray-500 border-r">Time</div>
         {weekDays.map((day, index) => (
-          <div 
+          <button
+            type="button"
             key={index} 
             className={`p-2 text-center border-r last:border-r-0 cursor-pointer hover:bg-gray-100 ${
               isToday(day) ? 'bg-blue-50 text-blue-600 font-semibold' : ''
             }`}
             onClick={() => onDateSelect(day)}
+            aria-label={`Select ${format(day, 'EEEE, MMMM d')}`}
           >
             <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
             <div className="text-sm font-medium">{format(day, 'd')}</div>
-          </div>
+          </button>
         ))}
       </div>
       
@@ -196,7 +234,12 @@ const TimeGridCalendar = ({
             ref={calendarRef} 
             className="min-h-full"
             onMouseLeave={handleMouseLeave}
+            aria-label="Weekly calendar. Use arrow keys to move between hourly slots and Enter to select one hour."
           >
+            <p className="sr-only" aria-live="polite">
+              Use arrow keys to move between hourly slots. Press Enter or Space
+              to create an event in the focused hour.
+            </p>
             {timeSlots.map((timeSlot) => (
               <div key={timeSlot.hour} className="grid grid-cols-8 border-b hover:bg-gray-50">
                 {/* Time label */}
@@ -218,6 +261,22 @@ const TimeGridCalendar = ({
                       onMouseDown={(e) => handleMouseDown(dayIndex, timeSlot.hour, e)}
                       onMouseEnter={() => handleMouseEnter(dayIndex, timeSlot.hour)}
                       onMouseUp={handleMouseUp}
+                      onTouchEnd={(event) => {
+                        event.preventDefault();
+                        selectSingleSlot(
+                          dayIndex,
+                          timeSlot.hour,
+                          event.currentTarget,
+                        );
+                      }}
+                      onKeyDown={(event) =>
+                        handleSlotKeyDown(event, dayIndex, timeSlot.hour)}
+                      role="button"
+                      tabIndex={0}
+                      data-calendar-day={dayIndex}
+                      data-calendar-hour={timeSlot.hour}
+                      aria-label={`${format(weekDays[dayIndex], 'EEEE, MMMM d')}, ${timeSlot.label}`}
+                      aria-pressed={isSelected}
                     >
                       {events.map((event, eventIndex) => {
                         const course = courses.find(c => c.id === event.course_id);
@@ -231,6 +290,20 @@ const TimeGridCalendar = ({
                             }`}
                             onClick={(e) => handleEventClick(event, event.type, e)}
                             onMouseDown={handleEventMouseDown}
+                            onTouchEnd={(touchEvent) => touchEvent.stopPropagation()}
+                            onKeyDown={(keyboardEvent) => {
+                              if (
+                                keyboardEvent.key === "Enter" ||
+                                keyboardEvent.key === " "
+                              ) {
+                                keyboardEvent.preventDefault();
+                                keyboardEvent.stopPropagation();
+                                onEventClick?.(event, event.type);
+                              }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Open ${event.type === 'study' ? 'study session' : 'assignment'} ${event.title}`}
                           >
                             <div className="flex items-center gap-1">
                               {event.type === 'study' ? (
