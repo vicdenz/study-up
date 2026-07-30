@@ -91,6 +91,12 @@ Owner: frontend/deployment maintainer
 
 Exit criteria: preview build succeeds and its deployment contains only the two expected public configuration variables.
 
+The repository now also includes a protected manual deployment workflow that
+pulls Vercel configuration, runs the complete quality gate, builds a prebuilt
+artifact, and deploys that exact artifact. Configure `VERCEL_ORG_ID`,
+`VERCEL_PROJECT_ID`, and `VERCEL_TOKEN` as described in
+[`LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md`](LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md).
+
 ## Phase 3: preview verification
 
 Owner: QA/product
@@ -143,7 +149,10 @@ Frontend rollback is independent of the database:
 ## Post-migration backlog
 
 - Add GitHub branch protection requiring `npm run check`.
-- Expand the Playwright baseline and add disposable local-Supabase integration tests.
+- Expand the Playwright and disposable Supabase baselines to cover uploads,
+  assignment/note/planner flows, and Edge Function HTTP behavior.
+- Enable Supabase automatic preview branches when the team needs hosted,
+  per-pull-request databases in addition to the disposable local CI stack.
 - Add AI quotas, spend alerts, and application monitoring.
 - Add a production Open Graph image using the final canonical domain.
 - Remove the Lovable deployment only after the agreed retention window.

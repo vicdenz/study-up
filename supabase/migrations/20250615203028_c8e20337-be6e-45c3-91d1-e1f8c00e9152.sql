@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- This function helps check if a user owns a course. We need it for the security rules.
 CREATE OR REPLACE FUNCTION public.is_course_owner(p_course_id uuid)
 RETURNS boolean

@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create a table for assignment-specific materials
 CREATE TABLE public.assignment_materials (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,

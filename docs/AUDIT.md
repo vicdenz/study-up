@@ -20,6 +20,8 @@ The branch converts the app into a Vercel-ready static SPA while retaining Supab
 | High | Storage upload/delete policies did not consistently prove assignment ownership. | Replaced the policies with course and assignment ownership checks for insert, select, and delete. |
 | High | 22 dependency advisories were present, including 14 high-severity advisories. | Updated the toolchain and runtime dependencies, replaced the vulnerable router with Wouter, and removed the obsolete Lovable tagger. `npm audit` now reports zero vulnerabilities. |
 | High | A duplicate `study_sessions` migration made a clean database replay fail. | Removed the duplicate historical migration and added an idempotent forward hardening migration. |
+| High | Historical migration filenames used a hyphen after the timestamp, so the current Supabase CLI silently skipped the entire application schema. | Renamed every migration to the required `<timestamp>_<name>.sql` format and added an infrastructure invariant plus CI replay from an empty database. |
+| High | Fresh Supabase projects no longer auto-grant new public tables to API roles, so authenticated browser queries failed before RLS evaluation. | Added an explicit least-privilege grant migration: no application-table access for `anon`, CRUD for `authenticated` behind RLS, and administrative access for `service_role`. |
 | High | Supabase URL/key values were hard-coded in source. | Added required `VITE_SUPABASE_*` configuration, runtime validation, and a safe `.env.example`. |
 | High | Upload functions exposed callback-style mutations while callers `await`ed them, so dialogs reported completion before uploads finished and errors escaped local handling. | Exposed `mutateAsync`, awaited actual storage/database completion, and kept progress and dialogs synchronized with the mutation. |
 | Medium | A failed material metadata insert left an orphaned storage object; a failed storage delete removed its database record and made cleanup harder. | Added compensating cleanup after insert failure and retained metadata when storage deletion fails so deletion can be retried. |
@@ -53,6 +55,10 @@ Run:
 npm ci
 npm run check
 npm audit
+npm run supabase:start:test
+npm run db:reset
+npm run db:test
+npm run db:lint
 ```
 
 Expected results:
@@ -64,13 +70,18 @@ Expected results:
 - npm audit: zero known vulnerabilities
 - Playwright: 10 public cases across desktop and mobile Chromium, plus 2
   credential-gated live product cases
+- Supabase migration replay: all 12 migrations apply from an empty Postgres 17 database
+- pgTAP: 24 schema, private-storage, API-grant, and cross-user RLS assertions passing
+- Supabase database lint: zero schema errors or warnings
 
 ## Residual risks and follow-up
 
 These do not block the frontend migration, but should be completed before a large public launch:
 
 1. Add per-user AI quotas/rate limits and budget alerts. Authentication prevents anonymous abuse but does not cap a signed-in user's Gemini spend.
-2. Add integration tests against a disposable local Supabase stack for RLS, migrations, Storage, Auth redirects, and Edge Functions. Unit/static/build checks cannot prove deployed project configuration.
+2. Expand the disposable Supabase integration baseline beyond migration replay,
+   schema checks, Auth provisioning, and RLS isolation to cover Storage object
+   operations and Edge Function HTTP behavior.
 3. Expand the browser suite from its public/auth/course/Gemini baseline to cover
    sign-up confirmation, assignment CRUD, uploads, note autosave, planner
    interactions, cross-user isolation, and AI error states.

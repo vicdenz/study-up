@@ -41,3 +41,24 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start disposable Supabase stack
+        run: npm run supabase:start:test
+      - name: Replay every migration and seed
+        run: npm run db:reset
+      - name: Run pgTAP database and RLS tests
+        run: npm run db:test
+      - name: Lint database schema
+        run: npm run db:lint
+      - name: Stop disposable Supabase stack
+        if: always()
+        run: npm run supabase:stop -- --no-backup

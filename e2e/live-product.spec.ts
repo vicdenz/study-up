@@ -2,8 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const email = process.env.E2E_EMAIL;
 const password = process.env.E2E_PASSWORD;
-const baseUrl = process.env.E2E_BASE_URL;
-const hasLiveConfiguration = Boolean(email && password && baseUrl);
+const hasLiveConfiguration = Boolean(email && password);
 
 async function signIn(page: Page) {
   await page.goto("/auth");
@@ -16,7 +15,7 @@ async function signIn(page: Page) {
 test.describe("@live authenticated product journeys", () => {
   test.skip(
     !hasLiveConfiguration,
-    "Set E2E_BASE_URL, E2E_EMAIL, and E2E_PASSWORD for a dedicated test user.",
+    "Set E2E_EMAIL and E2E_PASSWORD for a dedicated test user. Set E2E_BASE_URL when testing a deployment.",
   );
 
   test("creates and deletes a course", async ({ page }) => {
