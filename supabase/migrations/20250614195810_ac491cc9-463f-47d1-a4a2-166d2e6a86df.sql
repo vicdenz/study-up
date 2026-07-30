@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Add a column to store extracted text from course materials
 ALTER TABLE public.course_materials ADD COLUMN content TEXT;
 

@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create a table to store AI chat sessions
 CREATE TABLE public.ai_chats (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,

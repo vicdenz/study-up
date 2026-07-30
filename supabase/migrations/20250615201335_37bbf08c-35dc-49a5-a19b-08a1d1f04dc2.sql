@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create a storage bucket for course materials if it doesn't exist
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('course-materials', 'course-materials', true)

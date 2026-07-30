@@ -12,6 +12,11 @@ The Supabase project reference in `supabase/config.toml` is
 `samjothygejcrgxizdra`. Never commit access tokens, Gemini keys, test-user
 credentials, or a service-role key.
 
+For local development, copy `supabase/.env.example` to
+`supabase/.env.local`. That ignored file is read only by locally served Edge
+Functions. The browser continues to receive only the local public key generated
+by `npm run env:local`.
+
 ## Rotate and verify Gemini
 
 Authenticate and inspect secret metadata. `supabase secrets list` shows names and

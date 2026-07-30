@@ -17,9 +17,9 @@ Vercel hosts the browser application. Supabase remains the stateful backend and 
 
 Requirements:
 
-- Node.js 22.13 or newer
+- Node.js 22 (`nvm use` reads the committed `.nvmrc`)
 - npm
-- A Supabase project and Supabase CLI for backend development
+- Docker Desktop for the local Supabase-compatible test stack
 - A Gemini API key
 
 Install dependencies and configure browser-safe environment variables:
@@ -56,11 +56,19 @@ Start the app:
 npm run dev
 ```
 
+For an entirely local backend, database tests, local Edge Functions, and a
+generated test user, follow
+[docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md](docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md).
+
 ## Quality gates
 
 ```bash
 npm run check
 npm run test:e2e:public
+npm run supabase:start:test
+npm run db:reset
+npm run db:test
+npm run db:lint
 ```
 
 The combined check runs ESLint, strict TypeScript (including the Playwright
@@ -78,6 +86,9 @@ test commands.
 The repository includes `vercel.json` for Vite builds, SPA deep-link rewrites, immutable asset caching, and baseline security headers. Follow [docs/VERCEL_MIGRATION.md](docs/VERCEL_MIGRATION.md) for the staged migration and rollback procedure.
 
 The audit and remediation record is in [docs/AUDIT.md](docs/AUDIT.md).
+The exact operator setup, local commands, test matrix, and protected Vercel
+deployment workflow are in
+[docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md](docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md).
 
 ## License
 

@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create a table to track user activities
 CREATE TABLE public.activities (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,

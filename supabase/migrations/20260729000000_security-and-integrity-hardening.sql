@@ -1,4 +1,4 @@
--- Harden storage and cross-table ownership checks for existing deployments.
+-- Supabase migration: harden storage and cross-table ownership checks.
 
 UPDATE storage.buckets
 SET public = false,

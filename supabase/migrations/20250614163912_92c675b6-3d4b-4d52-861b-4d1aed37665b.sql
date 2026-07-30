@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create user profiles table
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create a table to store AI summaries for notes
 CREATE TABLE IF NOT EXISTS public.note_summaries (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,

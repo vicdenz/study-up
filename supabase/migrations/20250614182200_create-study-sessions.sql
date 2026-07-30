@@ -1,4 +1,4 @@
-
+-- Supabase migration.
 -- Create study_sessions table
 CREATE TABLE public.study_sessions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
