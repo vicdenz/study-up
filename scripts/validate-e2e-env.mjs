@@ -37,7 +37,10 @@ if (mode === "local") {
   } else {
     try {
       const url = new URL(baseUrl);
-      if (url.protocol !== "https:" && url.hostname !== "127.0.0.1") {
+      const isHttps = url.protocol === "https:";
+      const isLoopbackHttp =
+        url.protocol === "http:" && url.hostname === "127.0.0.1";
+      if (!isHttps && !isLoopbackHttp) {
         errors.push("E2E_BASE_URL must use HTTPS unless it targets 127.0.0.1");
       }
     } catch {
