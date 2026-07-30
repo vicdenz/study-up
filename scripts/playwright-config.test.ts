@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { vercelProtectionHeaders } from "../config/playwright.config";
+import { vercelProtectionHeaders } from "./vercel-protection";
 
 describe("Vercel deployment protection headers", () => {
   test.each([undefined, "", "   "])(
