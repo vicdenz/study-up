@@ -23,7 +23,11 @@ export default defineConfig({
       : undefined,
     coverage: {
       provider: "v8",
-      include: ["src/lib/material-validation.ts", "src/lib/utils.ts"],
+      include: [
+        "src/lib/calendar-navigation.ts",
+        "src/lib/material-validation.ts",
+        "src/lib/utils.ts",
+      ],
       reporter: ["text", "html", "lcov", "json-summary"],
       reportsDirectory: "artifacts/coverage",
       reportOnFailure: true,

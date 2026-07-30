@@ -289,6 +289,26 @@ test.describe("@live authenticated product journeys", () => {
     await previousWeek.focus();
     await page.keyboard.press("Enter");
     await expect(previousWeek).toBeFocused();
+
+    const firstSlot = page
+      .getByRole("button", { name: /Sunday, .*, 12 AM/ })
+      .first();
+    await firstSlot.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(
+      page.getByRole("button", { name: /Monday, .*, 12 AM/ }).first(),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("dialog", { name: "Create event for selected time" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Study Session" }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("dialog", { name: "Create event for selected time" }),
+    ).toHaveCount(0);
   });
 
   test("Gemini tutor returns a live model response", async ({ page }) => {
