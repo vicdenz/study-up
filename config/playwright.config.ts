@@ -4,6 +4,9 @@ import { fileURLToPath } from "node:url";
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const configuredWorkers = Number.parseInt(process.env.E2E_WORKERS ?? "", 10);
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const webServerCommand = process.env.E2E_USE_PREVIEW === "true"
+  ? "pnpm preview --host 127.0.0.1 --port 4173"
+  : "pnpm dev --host 127.0.0.1 --port 4173";
 
 export default defineConfig({
   testDir: `${repositoryRoot}e2e`,
@@ -54,7 +57,7 @@ export default defineConfig({
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: "pnpm dev --host 127.0.0.1 --port 4173",
+        command: webServerCommand,
         cwd: repositoryRoot,
         url: "http://127.0.0.1:4173",
         reuseExistingServer: !process.env.CI,
