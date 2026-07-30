@@ -70,8 +70,10 @@ Expected results:
 - Deno: 15 Edge Function request, CORS, error, and quota tests passing
 - Vite production build: success
 - pnpm audit: zero known vulnerabilities
-- Playwright: 12 public cases across desktop and mobile Chromium, plus 8
-  credential-gated live product journeys
+- Vitest: 101 unit/component/hook/infra checks with enforced core coverage
+- Playwright: public coverage across Chromium, Firefox, WebKit, Pixel, and
+  iPhone profiles; production performance/load checks; and disposable
+  authenticated integration journeys
 - Supabase migration replay: 13 migrations from an empty Postgres 17 database
 - pgTAP: 71 schema, quota, private-storage, API-grant, and cross-user RLS
   assertions
@@ -87,9 +89,10 @@ These do not block the frontend migration, but should be completed before a larg
 2. Add production monitoring for frontend exceptions, Edge Function
    latency/errors, database health, storage growth, and Gemini spend after
    selecting the monitoring platform and retention policy.
-3. Exercise sign-up email confirmation against the final Auth redirect
-   allowlist. This cannot be made deterministic until the production hostname
-   and email provider are configured.
+3. Exercise sign-up email confirmation against the final hosted Auth redirect
+   allowlist and production email provider. Local delivery and callback content
+   are deterministic CI gates; hosted deliverability still depends on the
+   selected provider and production DNS.
 4. Make activity creation transactional with the corresponding CRUD mutation
    if activity completeness becomes a product requirement.
 5. Run a formal manual WCAG 2.2 AA audit. The weekly calendar now has

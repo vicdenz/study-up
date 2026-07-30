@@ -96,8 +96,9 @@ Open:
 - Local email viewer: <http://127.0.0.1:54324>
 
 `env:local` creates a private `.env.local` from the running local stack.
-`e2e:user:local` creates or refreshes a localhost-only user and writes private
-credentials to `.env.e2e.local`. Both files are ignored by Git.
+`e2e:user:local` creates or refreshes two localhost-only users and writes their
+private credentials plus the local email-viewer URL to `.env.e2e.local`. Both
+environment files are ignored by Git.
 
 If you do not need local AI functions, run `pnpm dev` after `env:local`
 instead of `dev:local`. Stop the stack without deleting its data:

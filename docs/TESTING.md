@@ -25,8 +25,10 @@ pnpm test:suite bootstrap
 | Quick gate | `pnpm test:suite quick` | None | Lint, types, unit tests, infra checks, build, and audit |
 | Unit + coverage | `pnpm test:suite unit` | None | Vitest with per-file 100% thresholds for covered pure utilities |
 | Edge Functions | `pnpm test:suite functions` | Deno 2 | Request parsing, CORS, safe errors, and quota enforcement |
-| Public product | `pnpm test:suite public` | Chromium | Desktop and mobile Playwright tests without a backend |
+| Public product | `pnpm test:suite public` | Playwright browsers | Chromium, Firefox, WebKit, Pixel, and iPhone profiles without a backend |
+| Performance | `pnpm test:e2e:performance` | Chromium | Production bundle, navigation/paint budgets, and bounded concurrent load |
 | Database | `pnpm test:suite database` | Docker | Migration replay, pgTAP schema/RLS tests, and schema lint |
+| Product integration | `pnpm test:suite integration` | Docker and Chromium | Disposable Auth, two-user isolation, Storage bytes, email, and Gemini UI contract |
 | Local CRUD | `pnpm test:suite local` | Local Supabase and `.env.e2e.local` | Authenticated course CRUD |
 | Local full | `pnpm test:suite local-full` | Local Supabase, E2E credentials, Gemini secret, served functions | CRUD and Gemini |
 | Deployed product | `pnpm test:suite live` | Preview URL and dedicated account | Deployed Auth, CRUD, and Gemini |
@@ -56,6 +58,7 @@ pnpm test:unit:watch
 pnpm test:functions
 pnpm infra:verify
 pnpm build
+pnpm performance:bundle
 pnpm audit --audit-level=high
 ```
 
@@ -67,9 +70,22 @@ pnpm test:e2e:public:ci
 pnpm test:e2e:public:ci --workers=1
 ```
 
-The CI variant always executes both desktop Chromium and mobile Chromium. Tests
-fail on uncaught page errors, browser console errors, and HTTP 5xx responses.
+The CI variant executes desktop Chromium, Firefox, and WebKit plus emulated
+Pixel and iPhone profiles. Tests fail on uncaught page errors, browser console
+errors, HTTP 5xx responses, accessibility regressions, responsive overflow,
+offline-state regressions, and the reviewed Chromium visual baseline.
 Playwright captures traces, screenshots, videos, an HTML report, and JUnit XML.
+
+Production performance and static-load budgets:
+
+```bash
+pnpm test:e2e:performance
+```
+
+This builds and serves the production artifact, enforces bundle-size ceilings,
+checks navigation/paint timing, and sends 200 requests at concurrency 10 with a
+500 ms local p95 ceiling. It is a regression gate for this static frontend, not
+a substitute for capacity testing Supabase or Gemini.
 
 Database tests:
 
@@ -83,6 +99,20 @@ pnpm supabase:stop --no-backup
 
 Prefer `pnpm test:suite database` because it provides reliable cleanup. Database
 commands target the local stack only. Never add `--linked`.
+
+Authenticated integration tests:
+
+```bash
+pnpm test:suite integration --workers=1
+```
+
+The runner owns and cleans up a full local Supabase stack when necessary. It
+creates two confirmed localhost-only users and verifies Auth persistence,
+course/assignment/note CRUD, tenant isolation, private file upload and exact
+downloaded bytes, confirmation-email contents, planner keyboard behavior, and
+the browser-to-Edge-Function Gemini response contract. The deterministic
+contract response avoids external Gemini charges; the live suite below remains
+the provider canary.
 
 ## Local authenticated product tests
 
@@ -117,14 +147,21 @@ Use a dedicated, low-privilege test user:
 E2E_BASE_URL=https://your-preview.vercel.app \
 E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
+E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
+E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD" \
 pnpm test:suite live
 ```
 
 The runner exits before Playwright starts if any required setting is missing or
-invalid. Live CRUD uses a unique course name and attempts cleanup even when an
-assertion fails. To enable the optional cross-user isolation journey, also set
-`E2E_SECONDARY_EMAIL` and `E2E_SECONDARY_PASSWORD` for a second dedicated
-low-privilege account.
+invalid. Both low-privilege accounts are mandatory so cross-user isolation
+cannot silently skip. Live CRUD uses unique names and attempts cleanup even
+when an assertion fails.
+
+Playwright mobile profiles reproduce browser engines, viewport, input, and user
+agent behavior but are not physical devices. A true-device run requires an
+external device-cloud account (for example BrowserStack or Sauce Labs) and must
+be treated as a separate protected workflow so its credentials are never
+available to untrusted pull requests.
 
 ## CI entry points and artifacts
 

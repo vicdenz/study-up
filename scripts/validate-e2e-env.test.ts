@@ -99,6 +99,7 @@ describe("E2E environment validator", () => {
     expect(result.stderr).toContain("E2E_BASE_URL is required");
     expect(result.stderr).toContain("E2E_EMAIL must contain");
     expect(result.stderr).toContain("E2E_PASSWORD must contain");
+    expect(result.stderr).toContain("E2E_SECONDARY_EMAIL");
   });
 
   test("accepts an HTTPS preview with dedicated credentials", () => {
@@ -106,6 +107,8 @@ describe("E2E environment validator", () => {
       E2E_BASE_URL: "https://studyup-preview.vercel.app",
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
     });
 
     expect(result.status).toBe(0);
@@ -117,6 +120,8 @@ describe("E2E environment validator", () => {
       E2E_BASE_URL: "http://127.0.0.1:4173",
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
     });
 
     expect(result.status).toBe(0);
@@ -131,6 +136,8 @@ describe("E2E environment validator", () => {
       E2E_BASE_URL: baseUrl,
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
     });
 
     expect(result.status).toBe(1);
@@ -144,6 +151,8 @@ describe("E2E environment validator", () => {
       E2E_BASE_URL: "https://studyup-preview.vercel.app",
       E2E_EMAIL: "not-an-email",
       E2E_PASSWORD: "short",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
     });
 
     expect(result.status).toBe(1);
@@ -151,7 +160,7 @@ describe("E2E environment validator", () => {
     expect(result.stderr).toContain("E2E_PASSWORD must contain");
   });
 
-  test("requires both secondary isolation credentials when either is set", () => {
+  test("requires both secondary isolation credentials", () => {
     const result = validate("live", {
       E2E_BASE_URL: "https://studyup-preview.vercel.app",
       E2E_EMAIL: "studyup-e2e@example.test",
@@ -161,7 +170,7 @@ describe("E2E environment validator", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD must be provided together",
+      "E2E_SECONDARY_EMAIL and E2E_SECONDARY_PASSWORD are required",
     );
   });
 

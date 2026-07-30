@@ -68,12 +68,16 @@ pnpm test:suite unit
 pnpm test:suite functions
 pnpm test:suite public
 pnpm test:suite database
+pnpm test:suite integration
+pnpm test:e2e:performance
 ```
 
 The quick gate runs ESLint, strict TypeScript, unit tests, infrastructure
-verification, a production build, and an audit. The browser suite covers
-navigation, auth boundaries, desktop/mobile Chromium, accessibility, browser
-errors, server failures, and responsive overflow.
+verification, a production build, bundle budgets, and an audit. The browser
+suites cover Chromium, Firefox, WebKit, Pixel/iPhone profiles, visual and
+offline regressions, accessibility, performance/load budgets, authenticated
+two-user isolation, local confirmation email, private Storage bytes, browser
+errors, and server failures.
 
 See [docs/TESTING.md](docs/TESTING.md) for the complete local/CI command matrix,
 coverage reports, database cleanup behavior, and deployed-product tests.

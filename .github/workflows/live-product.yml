@@ -31,6 +31,8 @@ jobs:
           E2E_BASE_URL: ${{ inputs.deployment_url }}
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_SECONDARY_EMAIL: ${{ secrets.E2E_SECONDARY_EMAIL }}
+          E2E_SECONDARY_PASSWORD: ${{ secrets.E2E_SECONDARY_PASSWORD }}
       - name: Upload Playwright reports and failure evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
