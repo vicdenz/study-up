@@ -8,6 +8,6 @@ docs
 e2e
 playwright-report
 scripts
-supabase
+/supabase
 test-results
 *.log

@@ -7,6 +7,10 @@ const fail = (message) => {
 const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 const packageManifest = JSON.parse(readFileSync("package.json", "utf8"));
 const pnpmWorkspace = readFileSync("pnpm-workspace.yaml", "utf8");
+const vercelIgnore = readFileSync(".vercelignore", "utf8")
+  .split(/\r?\n/)
+  .map((line) => line.trim())
+  .filter((line) => line && !line.startsWith("#"));
 
 if (packageManifest.packageManager !== "pnpm@10.34.5") {
   fail("package.json must pin the approved pnpm release.");
@@ -43,6 +47,14 @@ if ("installCommand" in vercel) {
 }
 if (vercel.buildCommand !== "pnpm build") fail("Unexpected Vercel build command.");
 if (vercel.outputDirectory !== "dist") fail("Vercel output directory must be dist.");
+if (vercelIgnore.includes("supabase")) {
+  fail(
+    ".vercelignore must root the Supabase backend pattern as /supabase so it does not exclude src/integrations/supabase.",
+  );
+}
+if (!vercelIgnore.includes("/supabase")) {
+  fail(".vercelignore must exclude the root /supabase backend directory.");
+}
 if (
   !vercel.rewrites?.some(
     ({ source, destination }) =>

@@ -40,6 +40,7 @@ const createProject = () => {
     outputDirectory: "dist",
     rewrites: [{ source: "/(.*)", destination: "/index.html" }],
   });
+  writeFileSync(resolve(root, ".vercelignore"), "/supabase\n");
   writeFileSync(resolve(root, "pnpm-workspace.yaml"), 'packages:\n  - "."\n');
   writeFileSync(resolve(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
   writeFileSync(
@@ -194,6 +195,30 @@ describe("infrastructure verifier", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("SPA deep-link rewrite is missing");
+  });
+
+  test("rejects an unrooted Supabase ignore that hides the browser client", () => {
+    const root = createProject();
+    writeFileSync(resolve(root, ".vercelignore"), "supabase\n");
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "does not exclude src/integrations/supabase",
+    );
+  });
+
+  test("requires the backend directory to remain excluded from browser deploys", () => {
+    const root = createProject();
+    writeFileSync(resolve(root, ".vercelignore"), "docs\n");
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must exclude the root /supabase backend directory",
+    );
   });
 
   test.each([
