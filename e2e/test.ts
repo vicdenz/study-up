@@ -5,6 +5,7 @@ import {
   type Page,
   type TestInfo,
 } from "@playwright/test";
+import { vercelProtectionHeaders } from "../scripts/vercel-protection";
 
 const formatConsoleError = (message: ConsoleMessage) =>
   `console.${message.type()}: ${message.text()}`;
@@ -40,6 +41,18 @@ const observePageFailures = (page: Page, testInfo: TestInfo) => {
 
 export const test = base.extend({
   page: async ({ page }, run, testInfo) => {
+    const protectionHeaders = vercelProtectionHeaders();
+    const baseUrl = process.env.E2E_BASE_URL;
+    if (protectionHeaders && baseUrl) {
+      const response = await page.context().request.get(baseUrl, {
+        headers: protectionHeaders,
+      });
+      expect(
+        response.ok(),
+        `Vercel protection bypass failed with HTTP ${response.status()}`,
+      ).toBe(true);
+    }
+
     const assertNoPageFailures = observePageFailures(page, testInfo);
     await run(page);
     await assertNoPageFailures();
