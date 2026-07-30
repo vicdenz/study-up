@@ -55,9 +55,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - run: pnpm install --frozen-lockfile
       - run: deno test --frozen --allow-env supabase/functions
 
   browser-product:
