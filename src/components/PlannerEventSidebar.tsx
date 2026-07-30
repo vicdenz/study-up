@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Clock, BookOpen, Target, Trash2, Edit, Check, ExternalLink, Brain } from 'lucide-react';
 import { format } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/router';
 import EditAssignmentDialog from '@/components/EditAssignmentDialog';
 import { 
   AlertDialog, 
@@ -18,17 +18,17 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
-import type { Database } from '@/integrations/supabase/types';
-
-type Assignment = Database['public']['Tables']['assignments']['Row'];
-// NOTE: StudySession in DB has 'topic', but is likely aliased to 'title' in the hook.
-type StudySession = Database['public']['Tables']['study_sessions']['Row'] & { title: string; notes?: string };
-type Event = Assignment | StudySession;
+import type {
+  AssignmentUpdate,
+  AssignmentWithCourse,
+} from '@/hooks/useAssignments';
+import type { StudySessionWithCourse } from '@/hooks/useStudySessions';
+type Event = AssignmentWithCourse | StudySessionWithCourse;
 
 type Course = {
   id: string;
   name: string;
-  color: string;
+  color: string | null;
 };
 
 interface PlannerEventSidebarProps {
@@ -36,10 +36,10 @@ interface PlannerEventSidebarProps {
   eventType: 'assignment' | 'study' | null;
   courses: Course[];
   onClose: () => void;
-  onUpdateAssignment: (data: { id: string; updates: any }) => void;
-  onCompleteAssignment: (assignment: Assignment) => void;
+  onUpdateAssignment: (data: { id: string; updates: AssignmentUpdate }) => void;
+  onCompleteAssignment: (assignment: AssignmentWithCourse) => void;
   onDeleteAssignment: (assignmentId: string) => void;
-  onCompleteStudySession: (session: StudySession) => void;
+  onCompleteStudySession: (session: StudySessionWithCourse) => void;
   onDeleteStudySession: (sessionId: string) => void;
   onMakeStudyPlan: () => void;
   isGeneratingStudyPlan: boolean;
@@ -48,7 +48,7 @@ interface PlannerEventSidebarProps {
   isTogglingCompletion: boolean;
 }
 
-function isAssignment(event: Event): event is Assignment {
+function isAssignment(event: Event): event is AssignmentWithCourse {
   return 'due_date' in event;
 }
 
@@ -90,7 +90,7 @@ const PlannerEventSidebar: React.FC<PlannerEventSidebarProps> = ({
             <CardHeader className="flex flex-row items-start justify-between pb-2">
                 <div>
                     {course && (
-                        <Badge variant="outline" style={{ borderColor: course.color, color: course.color }}>
+                        <Badge variant="outline" style={{ borderColor: course.color ?? undefined, color: course.color ?? undefined }}>
                             {course.name}
                         </Badge>
                     )}
@@ -187,7 +187,7 @@ const PlannerEventSidebar: React.FC<PlannerEventSidebarProps> = ({
             <CardHeader className="flex flex-row items-start justify-between pb-2">
                 <div>
                     {course && (
-                        <Badge variant="outline" style={{ borderColor: course.color, color: course.color }}>
+                        <Badge variant="outline" style={{ borderColor: course.color ?? undefined, color: course.color ?? undefined }}>
                             {course.name}
                         </Badge>
                     )}
@@ -221,7 +221,7 @@ const PlannerEventSidebar: React.FC<PlannerEventSidebarProps> = ({
             </CardContent>
             <CardFooter className="flex flex-col gap-2 pt-4 border-t">
                  <Button
-                    onClick={() => onCompleteStudySession(event as StudySession)}
+                    onClick={() => onCompleteStudySession(event)}
                     disabled={isTogglingCompletion}
                     variant={event.completed ? 'secondary' : 'default'}
                     className="w-full"

@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
-type Assignment = Database['public']['Tables']['assignments']['Row'];
+export type Assignment = Database['public']['Tables']['assignments']['Row'];
 type AssignmentInsert = Database['public']['Tables']['assignments']['Insert'];
-type AssignmentUpdate = Database['public']['Tables']['assignments']['Update'];
-type AssignmentWithCourse = Assignment & { courses: { name: string, color: string, code: string } };
+export type AssignmentUpdate = Database['public']['Tables']['assignments']['Update'];
+export type AssignmentWithCourse = Assignment & {
+  courses: { name: string; color: string | null; code: string };
+};
 
 export const useAssignments = (courseId: string) => {
   const queryClient = useQueryClient();
@@ -214,13 +216,13 @@ export const useAssignments = (courseId: string) => {
     assignments,
     isLoading,
     error,
-    createAssignment: createAssignmentMutation.mutate,
+    createAssignment: createAssignmentMutation.mutateAsync,
     isCreating: createAssignmentMutation.isPending,
-    updateAssignment: updateAssignmentMutation.mutate,
+    updateAssignment: updateAssignmentMutation.mutateAsync,
     isUpdating: updateAssignmentMutation.isPending,
-    deleteAssignment: deleteAssignmentMutation.mutate,
+    deleteAssignment: deleteAssignmentMutation.mutateAsync,
     isDeleting: deleteAssignmentMutation.isPending,
-    toggleAssignmentCompletion: toggleAssignmentCompletionMutation.mutate,
+    toggleAssignmentCompletion: toggleAssignmentCompletionMutation.mutateAsync,
     isTogglingCompletion: toggleAssignmentCompletionMutation.isPending,
   };
 };
@@ -431,13 +433,13 @@ export const useAllAssignments = () => {
     assignments,
     isLoading,
     error,
-    createAssignment: createAssignmentMutation.mutate,
+    createAssignment: createAssignmentMutation.mutateAsync,
     isCreating: createAssignmentMutation.isPending,
-    updateAssignment: updateAssignmentMutation.mutate,
+    updateAssignment: updateAssignmentMutation.mutateAsync,
     isUpdating: updateAssignmentMutation.isPending,
-    deleteAssignment: deleteAssignmentMutation.mutate,
+    deleteAssignment: deleteAssignmentMutation.mutateAsync,
     isDeleting: deleteAssignmentMutation.isPending,
-    toggleAssignmentCompletion: toggleAssignmentCompletionMutation.mutate,
+    toggleAssignmentCompletion: toggleAssignmentCompletionMutation.mutateAsync,
     isTogglingCompletion: toggleAssignmentCompletionMutation.isPending,
   };
 };

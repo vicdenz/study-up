@@ -3,17 +3,25 @@ import React, { useState, useRef } from 'react';
 import { format, startOfWeek, addDays, addHours, startOfDay, isToday, isSameDay } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookOpen, Target } from 'lucide-react';
+import type { AssignmentWithCourse } from '@/hooks/useAssignments';
+import type { CourseWithStats } from '@/hooks/useCourses';
+import type { StudySessionWithCourse } from '@/hooks/useStudySessions';
+
+type PlannerEvent = AssignmentWithCourse | StudySessionWithCourse;
+type CalendarEvent =
+  | (AssignmentWithCourse & { type: 'assignment' })
+  | (StudySessionWithCourse & { type: 'study' });
 
 interface TimeGridCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
-  assignments: any[];
-  studySessions: any[];
-  courses: any[];
+  assignments: AssignmentWithCourse[];
+  studySessions: StudySessionWithCourse[];
+  courses: CourseWithStats[];
   onAddStudySession: () => void;
   onAddAssignment: () => void;
   onTimeSlotSelect?: (startTime: Date, endTime: Date, element: HTMLElement) => void;
-  onEventClick?: (event: any, eventType: 'assignment' | 'study') => void;
+  onEventClick?: (event: PlannerEvent, eventType: 'assignment' | 'study') => void;
 }
 
 interface TimeSlot {
@@ -34,7 +42,7 @@ const TimeGridCalendar = ({
   const [dragStart, setDragStart] = useState<{ day: number; hour: number } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ day: number; hour: number } | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
-  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Generate time slots from 12 AM to 11 PM
   const timeSlots: TimeSlot[] = Array.from({ length: 24 }, (_, i) => ({
@@ -72,8 +80,6 @@ const TimeGridCalendar = ({
         const startTime = addHours(startOfDay(startDay), minHour);
         const endTime = addHours(startOfDay(endDay), maxHour + 1);
         
-        // Get the element that represents the middle of the selected time range
-        const middleHour = Math.floor((minHour + maxHour) / 2);
         const targetElement = event.currentTarget as HTMLElement;
         
         // Add a small delay to prevent immediate closing
@@ -115,7 +121,7 @@ const TimeGridCalendar = ({
 
   const getEventsForTimeSlot = (dayIndex: number, hour: number) => {
     const day = weekDays[dayIndex];
-    const events: any[] = [];
+    const events: CalendarEvent[] = [];
     
     // Check study sessions
     studySessions.forEach(session => {
@@ -144,7 +150,7 @@ const TimeGridCalendar = ({
     return events;
   };
 
-  const handleEventClick = (event: any, eventType: 'assignment' | 'study', e: React.MouseEvent) => {
+  const handleEventClick = (event: PlannerEvent, eventType: 'assignment' | 'study', e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEventClick) {
       onEventClick(event, eventType);
@@ -199,7 +205,7 @@ const TimeGridCalendar = ({
                 </div>
                 
                 {/* Day columns */}
-                {weekDays.map((day, dayIndex) => {
+                {weekDays.map((_day, dayIndex) => {
                   const events = getEventsForTimeSlot(dayIndex, timeSlot.hour);
                   const isSelected = isSlotSelected(dayIndex, timeSlot.hour);
                   
@@ -253,4 +259,3 @@ const TimeGridCalendar = ({
 };
 
 export default TimeGridCalendar;
-

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,12 @@ import {
   Calendar,
   Loader2,
   Brain,
-  Trash2,
-  Edit
+  Trash2
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import UserMenu from "@/components/UserMenu";
 import { useNotes } from "@/hooks/useNotes";
+import type { Database } from "@/integrations/supabase/types";
 import { useCourses } from "@/hooks/useCourses";
 import EditNoteDialog from "@/components/EditNoteDialog";
 import {
@@ -38,7 +38,9 @@ const Notebook = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const [editingNote, setEditingNote] = useState<any>(null);
+  const [editingNote, setEditingNote] = useState<
+    Database["public"]["Tables"]["notes"]["Row"] | null
+  >(null);
 
   const { 
     notes, 

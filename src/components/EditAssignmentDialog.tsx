@@ -6,14 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Database } from '@/integrations/supabase/types';
+import type { AssignmentUpdate } from '@/hooks/useAssignments';
 import { Edit } from 'lucide-react';
+import { format } from 'date-fns';
 
 type Assignment = Database['public']['Tables']['assignments']['Row'];
 
 interface EditAssignmentDialogProps {
   assignment: Assignment;
-  onUpdate?: (data: { id: string; updates: any }) => void;
-  onUpdateAssignment?: (data: { id:string; updates: any }) => void; // Backward compatibility
+  onUpdate?: (data: { id: string; updates: AssignmentUpdate }) => void;
+  onUpdateAssignment?: (data: { id:string; updates: AssignmentUpdate }) => void;
   isUpdating?: boolean;
   children?: React.ReactNode;
   open?: boolean;
@@ -39,7 +41,7 @@ const EditAssignmentDialog = ({
   const [formData, setFormData] = useState({
     title: assignment.title,
     description: assignment.description || '',
-    due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().slice(0, 16) : ''
+    due_date: assignment.due_date ? format(new Date(assignment.due_date), "yyyy-MM-dd'T'HH:mm") : ''
   });
 
   useEffect(() => {
@@ -47,7 +49,7 @@ const EditAssignmentDialog = ({
       setFormData({
         title: assignment.title,
         description: assignment.description || '',
-        due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().slice(0, 16) : ''
+        due_date: assignment.due_date ? format(new Date(assignment.due_date), "yyyy-MM-dd'T'HH:mm") : ''
       });
     }
   }, [open, assignment]);
@@ -61,7 +63,9 @@ const EditAssignmentDialog = ({
       updates: {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
-        due_date: formData.due_date || null
+        due_date: formData.due_date
+          ? new Date(formData.due_date).toISOString()
+          : null
       }
     };
 

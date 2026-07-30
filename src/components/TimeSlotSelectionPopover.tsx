@@ -36,9 +36,7 @@ const TimeSlotSelectionPopover = ({
       
       // Ensure popover stays within viewport
       const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      let finalLeft = Math.max(8, Math.min(left, viewportWidth - popoverRect.width - 8));
+      const finalLeft = Math.max(8, Math.min(left, viewportWidth - popoverRect.width - 8));
       let finalTop = Math.max(8, top);
       
       // If popover would be above viewport, show it below the anchor

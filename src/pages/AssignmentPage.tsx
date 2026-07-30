@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from '@/lib/router';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, MessageSquare, Calendar, Edit, Brain, X, Paperclip, Download, Eye, Trash2 } from 'lucide-react';
@@ -21,6 +20,7 @@ import { useAiChats } from '@/hooks/useAiChats';
 import type { Database } from '@/integrations/supabase/types';
 import EditAssignmentDialog from '@/components/EditAssignmentDialog';
 import { useAssignments } from '@/hooks/useAssignments';
+import type { AssignmentUpdate } from '@/hooks/useAssignments';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
 import AddAssignmentMaterialDialog from '@/components/AddAssignmentMaterialDialog';
@@ -35,8 +35,6 @@ const AssignmentPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [showEditDialog, setShowEditDialog] = useState(false);
-
   const { assignment, isLoading: assignmentLoading } = useAssignment(assignmentId);
   const { chats, isLoading: chatsLoading, unlinkChat, isUnlinking } = useAiChats(assignmentId);
   const { materials, isLoading: materialsLoading, uploadMaterial, isUploading, deleteMaterial, isDeleting } = useAssignmentMaterials(assignmentId);
@@ -47,13 +45,10 @@ const AssignmentPage = () => {
     navigate('/ai-tutor', { state: { chatToLoad: chat } });
   };
   
-  const handleUpdateAssignment = (data: { id: string; updates: any }) => {
+  const handleUpdateAssignment = async (data: { id: string; updates: AssignmentUpdate }) => {
     if (!updateAssignment) return;
-    updateAssignment(data, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
-      },
-    });
+    await updateAssignment(data);
+    await queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
   };
 
   const handleNewChat = () => {
@@ -195,7 +190,7 @@ const AssignmentPage = () => {
               {materials && materials.length > 0 ? (
                 <ul className="space-y-3">
                   {materials.map(material => (
-                    <li key={material.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => window.open(material.url || '', '_blank')}>
+                    <li key={material.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex items-center space-x-3 flex-grow">
                         <span className="text-2xl">{getFileIcon(material.type)}</span>
                         <div>
@@ -206,12 +201,20 @@ const AssignmentPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Button asChild variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); window.open(material.url || '', '_blank'); }}>
-                            <Eye className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!material.url}
+                          aria-label={`View ${material.title}`}
+                          onClick={() => material.url && window.open(material.url, '_blank', 'noopener,noreferrer')}
+                        >
+                          <Eye className="h-4 w-4" />
                         </Button>
                          <Button 
                           variant="ghost" 
                           size="icon"
+                          disabled={!material.url}
+                          aria-label={`Download ${material.title}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!material.url) return;
