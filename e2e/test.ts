@@ -1,6 +1,7 @@
 import {
   expect,
   test as base,
+  type BrowserContext,
   type ConsoleMessage,
   type Page,
   type TestInfo,
@@ -39,19 +40,25 @@ const observePageFailures = (page: Page, testInfo: TestInfo) => {
   };
 };
 
+export const bootstrapVercelProtection = async (
+  context: BrowserContext,
+  baseUrl = process.env.E2E_BASE_URL,
+) => {
+  const protectionHeaders = vercelProtectionHeaders();
+  if (!protectionHeaders || !baseUrl) return;
+
+  const response = await context.request.get(baseUrl, {
+    headers: protectionHeaders,
+  });
+  expect(
+    response.ok(),
+    `Vercel protection bypass failed with HTTP ${response.status()}`,
+  ).toBe(true);
+};
+
 export const test = base.extend({
   page: async ({ page }, run, testInfo) => {
-    const protectionHeaders = vercelProtectionHeaders();
-    const baseUrl = process.env.E2E_BASE_URL;
-    if (protectionHeaders && baseUrl) {
-      const response = await page.context().request.get(baseUrl, {
-        headers: protectionHeaders,
-      });
-      expect(
-        response.ok(),
-        `Vercel protection bypass failed with HTTP ${response.status()}`,
-      ).toBe(true);
-    }
+    await bootstrapVercelProtection(page.context());
 
     const assertNoPageFailures = observePageFailures(page, testInfo);
     await run(page);

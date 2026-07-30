@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { Download } from "@playwright/test";
-import { expect, test } from "./test";
+import { bootstrapVercelProtection, expect, test } from "./test";
 
 const email = process.env.E2E_EMAIL;
 const password = process.env.E2E_PASSWORD;
@@ -12,8 +12,11 @@ const hasIsolationConfiguration = Boolean(secondaryEmail && secondaryPassword);
 const uniqueName = (prefix: string) =>
   `${prefix} ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
+const navigate = (page: Page, path: string) =>
+  page.goto(path, { waitUntil: "domcontentloaded" });
+
 async function signIn(page: Page, userEmail = email!, userPassword = password!) {
-  await page.goto("/auth");
+  await navigate(page, "/auth");
   await page.getByLabel("Email").fill(userEmail);
   await page.getByLabel("Password", { exact: true }).fill(userPassword);
   await page.getByRole("button", { name: "Sign In" }).click();
@@ -28,7 +31,7 @@ async function signOut(page: Page) {
 
 async function createCourse(page: Page, courseName: string) {
   const code = `E2E-${crypto.randomUUID().slice(0, 8)}`;
-  await page.goto("/courses");
+  await navigate(page, "/courses");
   await page.getByRole("button", { name: "Add Course" }).first().click();
   await page.getByLabel("Course Name").fill(courseName);
   await page.getByLabel("Course Code").fill(code);
@@ -42,7 +45,7 @@ async function createCourse(page: Page, courseName: string) {
 }
 
 async function deleteCourseIfPresent(page: Page, courseName: string) {
-  await page.goto("/courses");
+  await navigate(page, "/courses");
   const deleteButton = page.getByRole("button", {
     name: `Delete ${courseName}`,
   });
@@ -76,7 +79,7 @@ test.describe("@authenticated authenticated product journeys", () => {
     page,
   }) => {
     await signIn(page);
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(
@@ -84,7 +87,7 @@ test.describe("@authenticated authenticated product journeys", () => {
     ).toBeVisible();
 
     await signOut(page);
-    await page.goto("/dashboard");
+    await navigate(page, "/dashboard");
     await expect(page).toHaveURL(/\/auth$/);
   });
 
@@ -166,7 +169,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
     try {
       await signIn(page);
-      await page.goto("/notebook");
+      await navigate(page, "/notebook");
       await page.getByRole("button", { name: "Create Note" }).first().click();
       await page.getByPlaceholder("Untitled Note").fill(noteTitle);
       await page.getByPlaceholder("Start writing your note here...").fill(noteContent);
@@ -181,7 +184,7 @@ test.describe("@authenticated authenticated product journeys", () => {
       await expect(page.getByText(/Last saved:/)).toBeVisible();
       noteCreated = true;
 
-      await page.reload();
+      await page.reload({ waitUntil: "domcontentloaded" });
       await expect(page.getByPlaceholder("Untitled Note")).toHaveValue(noteTitle);
       await expect(
         page.getByPlaceholder("Start writing your note here..."),
@@ -198,7 +201,7 @@ test.describe("@authenticated authenticated product journeys", () => {
       noteCreated = false;
     } finally {
       if (noteCreated) {
-        await page.goto("/notebook");
+        await navigate(page, "/notebook");
         const deleteButton = page.getByRole("button", {
           name: `Delete ${noteTitle}`,
         });
@@ -274,6 +277,7 @@ test.describe("@authenticated authenticated product journeys", () => {
     const secondaryContext = await browser.newContext({ baseURL });
 
     try {
+      await bootstrapVercelProtection(secondaryContext, baseURL);
       await signIn(page);
       await createCourse(page, courseName);
       courseCreated = true;
@@ -295,7 +299,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
   test("planner week controls are keyboard-operable", async ({ page }) => {
     await signIn(page);
-    await page.goto("/planner");
+    await navigate(page, "/planner");
 
     const previousWeek = page.getByRole("button", { name: "Previous week" });
     const nextWeek = page.getByRole("button", { name: "Next week" });
@@ -348,7 +352,7 @@ test.describe("@authenticated authenticated product journeys", () => {
         }),
       });
     });
-    await page.goto("/ai-tutor");
+    await navigate(page, "/ai-tutor");
 
     await page
       .getByPlaceholder(/Ask your AI tutor/)
@@ -364,7 +368,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
   test("@gemini Gemini tutor returns a live model response", async ({ page }) => {
     await signIn(page);
-    await page.goto("/ai-tutor");
+    await navigate(page, "/ai-tutor");
 
     await page
       .getByPlaceholder(/Ask your AI tutor/)
