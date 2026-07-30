@@ -35,13 +35,16 @@ port = 54324
 
 [storage]
 enabled = true
-file_size_limit = "20MiB"
+file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:8080"
+site_url = "https://study-up-pi.vercel.app"
 additional_redirect_urls = [
+  "https://study-up-daviddaniliuc24-2286-david-daniliucs-projects.vercel.app",
+  "https://study-3sm41tfro-david-daniliucs-projects.vercel.app",
   "http://localhost:8080",
+  "http://127.0.0.1:8080",
   "http://127.0.0.1:4173",
 ]
 jwt_expiry = 3600
@@ -54,9 +57,13 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 secure_password_change = false
-max_frequency = "1s"
-otp_length = 6
+max_frequency = "1m"
+otp_length = 8
 otp_expiry = 3600
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 
 [functions.chat-with-gemini]
 verify_jwt = true
