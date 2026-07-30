@@ -65,12 +65,11 @@ Expected results:
 
 - ESLint: zero errors and warnings
 - TypeScript: zero errors with strict mode
-- Vitest: 68 tests passing, including infrastructure and shell-runner
-  regression coverage
+- Vitest: 107 unit, component, hook, infrastructure, and shell-runner
+  regression checks with enforced core coverage
 - Deno: 15 Edge Function request, CORS, error, and quota tests passing
 - Vite production build: success
 - pnpm audit: zero known vulnerabilities
-- Vitest: 101 unit/component/hook/infra checks with enforced core coverage
 - Playwright: public coverage across Chromium, Firefox, WebKit, Pixel, and
   iPhone profiles; production performance/load checks; and disposable
   authenticated integration journeys
