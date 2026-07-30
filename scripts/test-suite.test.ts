@@ -202,6 +202,39 @@ describe("test suite shell entry point", () => {
     expect(result.commands).not.toContain("pnpm db:lint");
   });
 
+  test("provisions and cleans up an owned full product integration stack", () => {
+    const result = runSuite("integration", {}, ["--workers=1"]);
+
+    expect(result.status).toBe(0);
+    expect(result.commands).toEqual([
+      "pnpm exec supabase status",
+      "pnpm supabase:start",
+      "pnpm db:reset",
+      "pnpm env:local --force",
+      "pnpm e2e:user:local",
+      "pnpm test:e2e:integration --workers=1",
+      "pnpm supabase:stop --no-backup",
+    ]);
+    expect(result.stdout).toContain(
+      "Starting a disposable full Supabase product-test stack",
+    );
+  });
+
+  test("preserves a product stack that was already running", () => {
+    const result = runSuite("integration", { supabaseRunning: true });
+
+    expect(result.status).toBe(0);
+    expect(result.commands).toEqual([
+      "pnpm exec supabase status",
+      "pnpm supabase:start",
+      "pnpm db:reset",
+      "pnpm env:local --force",
+      "pnpm e2e:user:local",
+      "pnpm test:e2e:integration",
+    ]);
+    expect(result.commands).not.toContain("pnpm supabase:stop --no-backup");
+  });
+
   test("rejects an unknown suite mode", () => {
     const result = runSuite("mystery");
 

@@ -74,6 +74,26 @@ run_database_suite() {
   pnpm db:lint
 }
 
+run_product_integration_suite() {
+  require_command docker
+
+  if pnpm exec supabase status >/dev/null 2>&1; then
+    log "Using the Supabase stack that was already running"
+    pnpm supabase:start
+  else
+    log "Starting a disposable full Supabase product-test stack"
+    supabase_owned=1
+    pnpm supabase:start
+  fi
+
+  log "Replaying migrations and configuring isolated product-test users"
+  pnpm db:reset
+  pnpm env:local --force
+  pnpm e2e:user:local
+  log "Running authenticated, isolation, storage, email, and AI-contract tests"
+  pnpm test:e2e:integration "$@"
+}
+
 usage() {
   cat <<'EOF'
 Usage: pnpm test:suite <mode> [additional Playwright arguments]
@@ -85,6 +105,7 @@ Modes:
   functions   Run isolated Edge Function request and quota tests with Deno.
   public      Run public desktop and mobile Playwright product tests.
   database    Start an owned test stack, replay migrations, run pgTAP, clean up.
+  integration Run authenticated two-user, storage, email, and AI-contract tests.
   local       Validate local credentials and run authenticated CRUD tests.
   local-full  Validate local Gemini config and run all authenticated tests.
   live        Require deployed-test credentials and test the deployed product.
@@ -95,6 +116,7 @@ Examples:
   pnpm test:suite bootstrap
   pnpm test:suite public --workers=1
   pnpm test:suite database
+  pnpm test:suite integration --workers=1
   E2E_BASE_URL=https://preview.example.app E2E_EMAIL=user@example.test \
     E2E_PASSWORD=secret pnpm test:suite live
 EOF
@@ -130,6 +152,9 @@ case "$MODE" in
     ;;
   database)
     run_database_suite
+    ;;
+  integration)
+    run_product_integration_suite "$@"
     ;;
   local)
     node scripts/validate-e2e-env.mjs local
