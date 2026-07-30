@@ -65,6 +65,7 @@ generated test user, follow
 ```bash
 pnpm test:suite quick
 pnpm test:suite unit
+pnpm test:suite functions
 pnpm test:suite public
 pnpm test:suite database
 ```

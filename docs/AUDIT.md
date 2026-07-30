@@ -1,7 +1,7 @@
 # StudyUp engineering audit
 
-Audit date: 2026-07-29  
-Audited baseline: `main` at `90ad09a`  
+Audit date: 2026-07-29
+Audited baseline: `main` at `90ad09a`
 Remediation branch: `codex/vercel-migration-audit`
 
 ## Executive summary
@@ -65,27 +65,35 @@ Expected results:
 
 - ESLint: zero errors and warnings
 - TypeScript: zero errors with strict mode
-- Vitest: 5 tests passing
+- Vitest: 68 tests passing, including infrastructure and shell-runner
+  regression coverage
+- Deno: 15 Edge Function request, CORS, error, and quota tests passing
 - Vite production build: success
 - pnpm audit: zero known vulnerabilities
-- Playwright: 10 public cases across desktop and mobile Chromium, plus 2
-  credential-gated live product cases
-- Supabase migration replay: all 12 migrations apply from an empty Postgres 17 database
-- pgTAP: 24 schema, private-storage, API-grant, and cross-user RLS assertions passing
+- Playwright: 12 public cases across desktop and mobile Chromium, plus 8
+  credential-gated live product journeys
+- Supabase migration replay: 13 migrations from an empty Postgres 17 database
+- pgTAP: 71 schema, quota, private-storage, API-grant, and cross-user RLS
+  assertions
 - Supabase database lint: zero schema errors or warnings
 
 ## Residual risks and follow-up
 
 These do not block the frontend migration, but should be completed before a large public launch:
 
-1. Add per-user AI quotas/rate limits and budget alerts. Authentication prevents anonymous abuse but does not cap a signed-in user's Gemini spend.
-2. Expand the disposable Supabase integration baseline beyond migration replay,
-   schema checks, Auth provisioning, and RLS isolation to cover Storage object
-   operations and Edge Function HTTP behavior.
-3. Expand the browser suite from its public/auth/course/Gemini baseline to cover
-   sign-up confirmation, assignment CRUD, uploads, note autosave, planner
-   interactions, cross-user isolation, and AI error states.
-4. Add production monitoring for frontend exceptions, Edge Function latency/errors, database health, storage growth, and Gemini spend.
-5. Make activity creation transactional with the corresponding CRUD mutation if activity completeness becomes a product requirement.
-6. Complete keyboard/touch interaction work for the drag-based weekly calendar and run a formal WCAG 2.2 AA audit.
-7. Add an explicit license and privacy/data-retention policy before external distribution.
+1. Configure provider-level Gemini budget alerts. Per-user hourly and daily
+   quotas now cap signed-in callers, but billing alerts require Gemini project
+   access.
+2. Add production monitoring for frontend exceptions, Edge Function
+   latency/errors, database health, storage growth, and Gemini spend after
+   selecting the monitoring platform and retention policy.
+3. Exercise sign-up email confirmation against the final Auth redirect
+   allowlist. This cannot be made deterministic until the production hostname
+   and email provider are configured.
+4. Make activity creation transactional with the corresponding CRUD mutation
+   if activity completeness becomes a product requirement.
+5. Run a formal manual WCAG 2.2 AA audit. The weekly calendar now has
+   keyboard/touch alternatives and automated accessibility coverage, but a
+   formal audit still requires assistive-technology and human testing.
+6. Add an explicit license and approved privacy/data-retention policy before
+   external distribution.
