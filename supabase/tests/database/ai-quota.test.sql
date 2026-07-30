@@ -229,14 +229,20 @@ select has_check(
   'ai_usage_windows',
   'quota bookkeeping has domain constraints'
 );
-select col_is_fk(
-  'public',
-  'ai_usage_windows',
-  'user_id',
-  'auth',
-  'users',
-  'id',
-  'quota rows are deleted with their Auth user'
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_constraint as constraint_definition
+    join pg_catalog.pg_attribute as column_definition
+      on column_definition.attrelid = constraint_definition.conrelid
+      and column_definition.attnum = any(constraint_definition.conkey)
+    where constraint_definition.conrelid =
+      'public.ai_usage_windows'::regclass
+      and constraint_definition.confrelid = 'auth.users'::regclass
+      and constraint_definition.contype = 'f'
+      and column_definition.attname = 'user_id'
+  ),
+  'quota rows reference their Auth user'
 );
 
 select * from finish();
