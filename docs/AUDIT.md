@@ -2,7 +2,7 @@
 
 Audit date: 2026-07-29
 Audited baseline: `main` at `90ad09a`
-Remediation branch: `codex/vercel-migration-audit`
+Remediation branch: `vercel-migration-audit`
 
 ## Executive summary
 
