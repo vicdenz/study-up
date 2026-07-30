@@ -138,10 +138,16 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
         return;
       }
 
+      if (typeof data?.response !== "string" || !data.response.trim()) {
+        console.error("Gemini API returned an invalid response");
+        toast.error("The AI provider returned an invalid response");
+        return;
+      }
+
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: data.response,
+        content: data.response.trim(),
         timestamp: new Date(),
       };
 
