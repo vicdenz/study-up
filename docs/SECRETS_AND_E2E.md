@@ -86,11 +86,15 @@ E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
 E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
 E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD" \
+VERCEL_AUTOMATION_BYPASS_SECRET="$STUDYUP_VERCEL_BYPASS_SECRET" \
 pnpm test:e2e:live --project=chromium
 ```
 
 Both accounts are required by the live configuration validator; the isolation
 journey cannot silently skip in the protected workflow.
+The Vercel bypass secret is required only when Deployment Protection is enabled.
+Keep it in the protected `preview` GitHub environment; Playwright sends it as an
+HTTP header and never places it in the deployment URL.
 
 The database enforces independent hourly and daily limits for chat and study
 plan generation. A `429` from either function therefore means the current usage

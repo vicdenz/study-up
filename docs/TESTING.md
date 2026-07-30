@@ -149,6 +149,7 @@ E2E_EMAIL=studyup-e2e@example.com \
 E2E_PASSWORD="$STUDYUP_E2E_PASSWORD" \
 E2E_SECONDARY_EMAIL=studyup-e2e-two@example.com \
 E2E_SECONDARY_PASSWORD="$STUDYUP_E2E_SECONDARY_PASSWORD" \
+VERCEL_AUTOMATION_BYPASS_SECRET="$STUDYUP_VERCEL_BYPASS_SECRET" \
 pnpm test:suite live
 ```
 
@@ -156,6 +157,9 @@ The runner exits before Playwright starts if any required setting is missing or
 invalid. Both low-privilege accounts are mandatory so cross-user isolation
 cannot silently skip. Live CRUD uses unique names and attempts cleanup even
 when an assertion fails.
+For protected Vercel previews, store the automation bypass secret in the
+protected CI environment. Playwright supplies it as a request header rather than
+putting it in logs or URLs.
 
 Playwright mobile profiles reproduce browser engines, viewport, input, and user
 agent behavior but are not physical devices. A true-device run requires an

@@ -8,6 +8,18 @@ const webServerCommand = process.env.E2E_USE_PREVIEW === "true"
   ? "pnpm preview --host 127.0.0.1 --port 4173"
   : "pnpm dev --host 127.0.0.1 --port 4173";
 
+export const vercelProtectionHeaders = (
+  secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+) => {
+  const value = secret?.trim();
+  return value
+    ? {
+        "x-vercel-protection-bypass": value,
+        "x-vercel-set-bypass-cookie": "true",
+      }
+    : undefined;
+};
+
 export default defineConfig({
   testDir: `${repositoryRoot}e2e`,
   outputDir: `${repositoryRoot}artifacts/playwright/test-results`,
@@ -53,6 +65,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    extraHTTPHeaders: vercelProtectionHeaders(),
   },
   webServer: externalBaseUrl
     ? undefined
