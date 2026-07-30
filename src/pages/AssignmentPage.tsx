@@ -26,6 +26,8 @@ import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
 import AddAssignmentMaterialDialog from '@/components/AddAssignmentMaterialDialog';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
 import StudyPlanDialog from '@/components/StudyPlanDialog';
+import { downloadFile } from '@/lib/download-file';
+import { toast } from 'sonner';
 
 type AiChat = Database['public']['Tables']['ai_chats']['Row'];
 type AssignmentMaterial = Database['public']['Tables']['assignment_materials']['Row'];
@@ -218,12 +220,10 @@ const AssignmentPage = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!material.url) return;
-                            const link = document.createElement('a');
-                            link.href = material.url;
-                            link.download = material.title;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            void downloadFile(material.url, material.title).catch((error) => {
+                              console.error('Material download failed:', error);
+                              toast.error('Failed to download material');
+                            });
                           }}
                         >
                           <Download className="h-4 w-4" />
