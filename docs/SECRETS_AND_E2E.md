@@ -27,15 +27,19 @@ supabase login
 supabase secrets list --project-ref hzkwaecgggkjikwlvghi
 ```
 
-Rotate the key without writing it to a repository file:
+Rotate the key without writing it to a repository file or shell history. This
+command expects zsh and the repository's already-linked Supabase project:
 
-```bash
-read -s "GEMINI_KEY?New Gemini API key: "
-supabase secrets set --project-ref hzkwaecgggkjikwlvghi \
-  GEMINI_API_KEY="$GEMINI_KEY" \
-  GEMINI_MODEL=gemini-3.6-flash
-unset GEMINI_KEY
+```zsh
+read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k
 ```
+
+Paste the command as one complete line. A terminal may visually wrap it, but an
+actual newline before `GEMINI_API_KEY` causes Supabase CLI to receive no secret
+argument. An HTML `502 Bad Gateway` response is a transient Supabase control
+plane failure; wait briefly and retry the same command. Configure the
+non-sensitive model separately with
+`pnpm exec supabase secrets set GEMINI_MODEL=gemini-3.6-flash`.
 
 Set the exact Vercel preview and production origins, plus local development:
 

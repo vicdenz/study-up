@@ -40,15 +40,19 @@ Never use a Supabase secret/service-role key in a `VITE_*` variable. Vite embeds
 
 Apply the database migrations and configure Edge Function secrets:
 
-```bash
+```zsh
 supabase link --project-ref <project-ref>
 supabase db push
-supabase secrets set GEMINI_API_KEY=<key>
+read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k
 supabase secrets set GEMINI_MODEL=gemini-3.6-flash
 supabase secrets set ALLOWED_ORIGINS=http://localhost:8080
 supabase functions deploy chat-with-gemini
 supabase functions deploy generate-study-plan
 ```
+
+Paste the Gemini command as one complete line; visual wrapping in the terminal
+is harmless, but inserting a newline before `GEMINI_API_KEY` splits the command.
+If Supabase returns HTTP 502, wait briefly and retry the same line.
 
 Start the app:
 

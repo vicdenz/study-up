@@ -45,11 +45,15 @@ Owner: backend maintainer
 
 4. Set server-only secrets:
 
-   ```bash
-   supabase secrets set GEMINI_API_KEY=<key>
+   ```zsh
+   read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k
    supabase secrets set GEMINI_MODEL=gemini-3.6-flash
    supabase secrets set ALLOWED_ORIGINS=https://<production-host>,http://localhost:8080
    ```
+
+   Paste the Gemini command as one complete line so the secret assignment is not
+   split into a second shell command. If Supabase responds with an HTML 502,
+   wait briefly and retry the unchanged line.
 
 5. Deploy both functions:
 
