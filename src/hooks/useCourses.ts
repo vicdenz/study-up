@@ -1,16 +1,15 @@
 
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
-type Course = Database['public']['Tables']['courses']['Row'];
+export type Course = Database['public']['Tables']['courses']['Row'];
 type CourseInsert = Database['public']['Tables']['courses']['Insert'];
 type Assignment = Database['public']['Tables']['assignments']['Row'];
 type CourseMaterial = Database['public']['Tables']['course_materials']['Row'];
 
-interface CourseWithStats extends Course {
+export interface CourseWithStats extends Course {
   assignments?: Assignment[];
   materials?: CourseMaterial[];
   assignmentCount: number;

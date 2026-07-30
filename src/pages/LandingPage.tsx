@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Brain, ArrowRight, Linkedin, Github, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Brain, Linkedin, Github, X } from "lucide-react";
+import { Link, useNavigate } from "@/lib/router";
 
 const LandingPage = () => {
   const navigate = useNavigate();

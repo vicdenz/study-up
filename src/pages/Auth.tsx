@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Brain, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 import { toast } from "sonner";
 
 const Auth = () => {
@@ -45,7 +45,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
 
@@ -75,7 +75,7 @@ const Auth = () => {
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         options: {
           emailRedirectTo: redirectUrl,
@@ -135,6 +135,7 @@ const Auth = () => {
                         id="firstName"
                         name="firstName"
                         type="text"
+                        autoComplete="given-name"
                         placeholder="John"
                         value={formData.firstName}
                         onChange={handleInputChange}
@@ -151,6 +152,7 @@ const Auth = () => {
                         id="lastName"
                         name="lastName"
                         type="text"
+                        autoComplete="family-name"
                         placeholder="Doe"
                         value={formData.lastName}
                         onChange={handleInputChange}
@@ -170,6 +172,7 @@ const Auth = () => {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -187,14 +190,17 @@ const Auth = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
                     className="pl-10 pr-10"
                     required
+                    minLength={8}
                   />
                   <button
                     type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   >

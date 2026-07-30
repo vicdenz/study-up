@@ -1,6 +1,6 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +21,9 @@ import {
 } from "@/components/ui/select";
 import { useNotes } from "@/hooks/useNotes";
 import { useCourses } from "@/hooks/useCourses";
-import { toast } from "sonner";
 
 const NoteEditor = () => {
-  const { noteId } = useParams();
+  const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
   const isNewNote = noteId === "new";
   
@@ -37,7 +36,7 @@ const NoteEditor = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { notes, createNote, updateNote, isCreating, isUpdating } = useNotes();
   const { courses } = useCourses();
@@ -57,7 +56,7 @@ const NoteEditor = () => {
   }, [noteId, notes, isNewNote]);
 
   // Auto-save function
-  const saveNote = async () => {
+  const saveNote = useCallback(async () => {
     if (!title.trim()) return;
 
     setIsSaving(true);
@@ -77,23 +76,13 @@ const NoteEditor = () => {
     try {
       if (isNewNote && !currentNoteId) {
         // Create new note
-        const newNote = await new Promise((resolve, reject) => {
-          createNote(noteData, {
-            onSuccess: (data) => resolve(data),
-            onError: (error) => reject(error)
-          });
-        });
+        const newNote = await createNote(noteData);
         setCurrentNoteId(newNote.id);
         // Update URL to reflect the new note ID
         navigate(`/notebook/note/${newNote.id}`, { replace: true });
       } else if (currentNoteId) {
         // Update existing note
-        await new Promise((resolve, reject) => {
-          updateNote({ id: currentNoteId, ...noteData }, {
-            onSuccess: resolve,
-            onError: reject
-          });
-        });
+        await updateNote({ id: currentNoteId, ...noteData });
       }
       setLastSaved(new Date());
     } catch (error) {
@@ -101,31 +90,32 @@ const NoteEditor = () => {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    content,
+    courseId,
+    createNote,
+    currentNoteId,
+    isNewNote,
+    navigate,
+    tagsInput,
+    title,
+    updateNote,
+  ]);
 
   // Debounced auto-save
-  const debouncedSave = () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      if (title.trim()) {
-        saveNote();
-      }
-    }, 1000); // Save after 1 second of inactivity
-  };
-
   // Trigger auto-save on content changes
   useEffect(() => {
     if (title.trim() || content.trim()) {
-      debouncedSave();
+      saveTimeoutRef.current = setTimeout(() => {
+        void saveNote();
+      }, 1000);
     }
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [title, content, courseId, tagsInput]);
+  }, [content, courseId, saveNote, tagsInput, title]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -139,7 +129,7 @@ const NoteEditor = () => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    saveNote();
+    void saveNote();
   };
 
   const getCourseNameById = (courseId: string | null) => {

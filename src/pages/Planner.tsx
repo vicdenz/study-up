@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Clock, BookOpen, Target, Trash2, Edit, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, isToday, isTomorrow, isSameDay, isPast, addWeeks, subWeeks } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addWeeks, subWeeks } from 'date-fns';
 import Navigation from '@/components/Navigation';
 import UserMenu from '@/components/UserMenu';
 import AddStudySessionDialog from '@/components/AddStudySessionDialog';
@@ -15,9 +14,15 @@ import PlannerEventSidebar from '@/components/PlannerEventSidebar';
 import { useStudySessions } from '@/hooks/useStudySessions';
 import { useCourses } from '@/hooks/useCourses';
 import { useAllAssignments } from '@/hooks/useAssignments';
-import EditAssignmentDialog from '@/components/EditAssignmentDialog';
 import { useStudyPlanner } from '@/hooks/useStudyPlanner';
 import StudyPlanDialog from '@/components/StudyPlanDialog';
+import type {
+  AssignmentUpdate,
+  AssignmentWithCourse,
+} from '@/hooks/useAssignments';
+import type { StudySessionWithCourse } from '@/hooks/useStudySessions';
+
+type PlannerEvent = AssignmentWithCourse | StudySessionWithCourse;
 
 const Planner = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -29,10 +34,10 @@ const Planner = () => {
     endTime: Date;
   } | null>(null);
   const [popoverAnchorElement, setPopoverAnchorElement] = useState<HTMLElement | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<PlannerEvent | null>(null);
   const [selectedEventType, setSelectedEventType] = useState<'assignment' | 'study' | null>(null);
 
-  const { studySessions, isLoading, updateStudySession, deleteStudySession } = useStudySessions();
+  const { studySessions, updateStudySession, deleteStudySession } = useStudySessions();
   const { courses } = useCourses();
   const {
     assignments,
@@ -67,37 +72,11 @@ const Planner = () => {
     }
   }, [assignments, studySessions, selectedEvent, selectedEventType]);
 
-  const getSessionsForDate = (date: Date) => {
-    return studySessions.filter(session => {
-      const sessionDate = new Date(session.scheduled_date);
-      return isSameDay(sessionDate, date);
-    });
-  };
-
-  const getAssignmentsForDate = (date: Date) => {
-    return assignments.filter(assignment => {
-      if (!assignment.due_date) return false;
-      const dueDate = new Date(assignment.due_date);
-      return isSameDay(dueDate, date);
-    });
-  };
-
-  const formatDateLabel = (date: Date) => {
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
-    return format(date, 'MMM d');
-  };
-
-  const handleCompleteSession = (sessionId: string, completed: boolean) => {
-    updateStudySession({ id: sessionId, completed });
-  };
-
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
   };
 
   const handleTimeSlotSelect = (startTime: Date, endTime: Date, element: HTMLElement) => {
-    console.log('Time slot selected:', { startTime, endTime });
     setSelectedTimeSlot({ startTime, endTime });
     setPopoverAnchorElement(element);
     setShowTimeSlotPopover(true);
@@ -127,17 +106,17 @@ const Planner = () => {
     setShowTimeSlotPopover(false);
   };
 
-  const handleCompleteAssignment = (assignment: any) => {
+  const handleCompleteAssignment = (assignment: AssignmentWithCourse) => {
     // Optimistically update the selected event in the sidebar
     setSelectedEvent(prev => (prev && prev.id === assignment.id ? { ...prev, completed: !assignment.completed } : prev));
     toggleAssignmentCompletion(assignment);
   };
 
-  const handleUpdateAssignment = (data: { id: string; updates: any }) => {
+  const handleUpdateAssignment = (data: { id: string; updates: AssignmentUpdate }) => {
     updateAssignment(data);
   };
 
-  const handleCompleteStudySession = (session: any) => {
+  const handleCompleteStudySession = (session: StudySessionWithCourse) => {
     // Optimistically update the selected event in the sidebar
     setSelectedEvent(prev => (prev && prev.id === session.id ? { ...prev, completed: !session.completed } : prev));
     updateStudySession({ id: session.id, completed: !session.completed });
@@ -151,7 +130,7 @@ const Planner = () => {
     setSelectedDate(addWeeks(selectedDate, 1));
   };
 
-  const handleEventClick = (event: any, eventType: 'assignment' | 'study') => {
+  const handleEventClick = (event: PlannerEvent, eventType: 'assignment' | 'study') => {
     setSelectedEvent(event);
     setSelectedEventType(eventType);
   };
@@ -160,9 +139,6 @@ const Planner = () => {
     setSelectedEvent(null);
     setSelectedEventType(null);
   };
-
-  const selectedDateSessions = getSessionsForDate(selectedDate);
-  const selectedDateAssignments = getAssignmentsForDate(selectedDate);
 
   return (
     <div className="h-screen bg-gray-50 flex font-sans overflow-hidden">

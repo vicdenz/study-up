@@ -3,13 +3,12 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,6 +24,7 @@ const formSchema = z.object({
   scheduled_date: z.date({
     required_error: 'Please select a date',
   }),
+  scheduled_time: z.string().regex(/^\d{2}:\d{2}$/, 'Please select a time'),
   duration: z.number().min(15, 'Duration must be at least 15 minutes'),
 });
 
@@ -47,6 +47,7 @@ const AddStudySessionDialog = ({ open, onOpenChange, selectedDate }: AddStudySes
       course_id: '',
       description: '',
       scheduled_date: selectedDate || new Date(),
+      scheduled_time: format(selectedDate || new Date(), 'HH:mm'),
       duration: 60,
     },
   });
@@ -54,21 +55,29 @@ const AddStudySessionDialog = ({ open, onOpenChange, selectedDate }: AddStudySes
   React.useEffect(() => {
     if (selectedDate) {
       form.setValue('scheduled_date', selectedDate);
+      form.setValue('scheduled_time', format(selectedDate, 'HH:mm'));
     }
   }, [selectedDate, form]);
 
-  const onSubmit = (data: FormData) => {
-    // Ensure all required fields are present and properly typed
-    createStudySession({
-      title: data.title,
-      course_id: data.course_id,
-      description: data.description || '',
-      scheduled_date: data.scheduled_date.toISOString(),
-      duration: data.duration,
-      completed: false,
-    });
-    onOpenChange(false);
-    form.reset();
+  const onSubmit = async (data: FormData) => {
+    const [hours, minutes] = data.scheduled_time.split(':').map(Number);
+    const scheduledDate = new Date(data.scheduled_date);
+    scheduledDate.setHours(hours, minutes, 0, 0);
+
+    try {
+      await createStudySession({
+        title: data.title.trim(),
+        course_id: data.course_id,
+        description: data.description?.trim() || null,
+        scheduled_date: scheduledDate.toISOString(),
+        duration: data.duration,
+        completed: false,
+      });
+      onOpenChange(false);
+      form.reset();
+    } catch {
+      // The mutation displays the actionable error and the form remains open.
+    }
   };
 
   return (
@@ -152,12 +161,26 @@ const AddStudySessionDialog = ({ open, onOpenChange, selectedDate }: AddStudySes
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => date < startOfDay(new Date())}
                         initialFocus
                         className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="scheduled_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start time</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

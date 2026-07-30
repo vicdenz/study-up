@@ -6,7 +6,7 @@ import Navigation from "@/components/Navigation";
 import UserMenu from "@/components/UserMenu";
 import AddCourseDialog from "@/components/AddCourseDialog";
 import { useCourses } from "@/hooks/useCourses";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 import {
   AlertDialog,
   AlertDialogAction,
