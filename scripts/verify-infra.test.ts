@@ -46,6 +46,19 @@ const createProject = () => {
   writeFileSync(
     resolve(root, "supabase/config.toml"),
     [
+      "[auth]",
+      'site_url = "https://study-up.vercel.app"',
+      "additional_redirect_urls = [",
+      '  "http://localhost:8080",',
+      '  "http://127.0.0.1:8080",',
+      '  "http://127.0.0.1:4173",',
+      "]",
+      "[auth.email]",
+      'max_frequency = "1m"',
+      "otp_length = 8",
+      "[auth.mfa.totp]",
+      "enroll_enabled = true",
+      "verify_enabled = true",
       "[functions.chat-with-gemini]",
       "verify_jwt = true",
       "[functions.generate-study-plan]",
@@ -243,21 +256,86 @@ describe("infrastructure verifier", () => {
 
   test("requires JWT verification for every user-facing function", () => {
     const root = createProject();
+    const path = resolve(root, "supabase/config.toml");
     writeFileSync(
-      resolve(root, "supabase/config.toml"),
-      [
-        "[functions.chat-with-gemini]",
-        "verify_jwt = false",
-        "[functions.generate-study-plan]",
-        "verify_jwt = true",
-        "",
-      ].join("\n"),
+      path,
+      readFileSync(path, "utf8").replace(
+        "[functions.chat-with-gemini]\nverify_jwt = true",
+        "[functions.chat-with-gemini]\nverify_jwt = false",
+      ),
     );
 
     const result = runVerifier(root);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("chat-with-gemini must verify JWTs");
+  });
+
+  test("rejects a localhost site URL for hosted authentication", () => {
+    const root = createProject();
+    const path = resolve(root, "supabase/config.toml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace(
+        'site_url = "https://study-up.vercel.app"',
+        'site_url = "http://127.0.0.1:8080"',
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("HTTPS Vercel site URL");
+  });
+
+  test("requires every supported local authentication redirect", () => {
+    const root = createProject();
+    const path = resolve(root, "supabase/config.toml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace(
+        '  "http://127.0.0.1:4173",\n',
+        "",
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("http://127.0.0.1:4173");
+  });
+
+  test("rejects weakened hosted email authentication controls", () => {
+    const root = createProject();
+    const path = resolve(root, "supabase/config.toml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8")
+        .replace('max_frequency = "1m"', 'max_frequency = "1s"')
+        .replace("otp_length = 8", "otp_length = 6"),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("one-minute throttle and eight-digit OTP");
+  });
+
+  test("requires TOTP enrollment and verification", () => {
+    const root = createProject();
+    const path = resolve(root, "supabase/config.toml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace(
+        "verify_enabled = true",
+        "verify_enabled = false",
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("TOTP enrollment and verification");
   });
 
   test("rejects malformed migration names", () => {

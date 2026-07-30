@@ -76,6 +76,31 @@ for (const forbiddenName of [
 }
 
 const config = readFileSync("supabase/config.toml", "utf8");
+if (!/site_url\s*=\s*"https:\/\/[^"]+\.vercel\.app"/.test(config)) {
+  fail("Hosted Supabase Auth must use an HTTPS Vercel site URL.");
+}
+for (const redirectUrl of [
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:4173",
+]) {
+  if (!config.includes(`"${redirectUrl}"`)) {
+    fail(`Supabase Auth must preserve the local redirect ${redirectUrl}.`);
+  }
+}
+if (!/max_frequency\s*=\s*"1m"/.test(config) || !/otp_length\s*=\s*8/.test(config)) {
+  fail("Hosted email Auth must retain the one-minute throttle and eight-digit OTP.");
+}
+const totpSection = config.match(
+  /\[auth\.mfa\.totp\]([\s\S]*?)(?=\n\[|$)/,
+)?.[1];
+if (
+  !totpSection ||
+  !/enroll_enabled\s*=\s*true/.test(totpSection) ||
+  !/verify_enabled\s*=\s*true/.test(totpSection)
+) {
+  fail("Hosted Supabase Auth must keep TOTP enrollment and verification enabled.");
+}
 for (const functionName of ["chat-with-gemini", "generate-study-plan"]) {
   const header = `[functions.${functionName}]`;
   const sectionStart = config.indexOf(header);
