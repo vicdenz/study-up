@@ -262,6 +262,8 @@ test.describe("@authenticated authenticated product journeys", () => {
 
   test("keeps one user's courses isolated from a second user", async ({
     page,
+    browser,
+    baseURL,
   }) => {
     test.skip(
       !hasIsolationConfiguration,
@@ -269,26 +271,23 @@ test.describe("@authenticated authenticated product journeys", () => {
     );
     const courseName = uniqueName("E2E Private Course");
     let courseCreated = false;
+    const secondaryContext = await browser.newContext({ baseURL });
 
     try {
       await signIn(page);
       await createCourse(page, courseName);
       courseCreated = true;
-      await signOut(page);
 
-      await signIn(page, secondaryEmail!, secondaryPassword!);
-      await page.goto("/courses");
-      await expect(page.getByText(courseName, { exact: true })).toHaveCount(0);
-      await signOut(page);
-
-      await signIn(page);
+      const secondaryPage = await secondaryContext.newPage();
+      await signIn(secondaryPage, secondaryEmail!, secondaryPassword!);
+      await secondaryPage.goto("/courses");
+      await expect(
+        secondaryPage.getByText(courseName, { exact: true }),
+      ).toHaveCount(0);
       await expect(page.getByText(courseName, { exact: true })).toBeVisible();
     } finally {
+      await secondaryContext.close();
       if (courseCreated) {
-        await page.goto("/dashboard");
-        const userMenu = page.getByRole("button", { name: "Open user menu" });
-        if (await userMenu.count()) await signOut(page);
-        await signIn(page);
         await deleteCourseIfPresent(page, courseName);
       }
     }
