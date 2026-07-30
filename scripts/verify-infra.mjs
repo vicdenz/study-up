@@ -29,6 +29,7 @@ for (const sectionName of ["dependencies", "devDependencies"]) {
 for (const requiredScript of [
   "test:ci:static",
   "test:ci:unit",
+  "test:ci:functions",
   "test:ci:e2e",
   "test:suite",
 ]) {

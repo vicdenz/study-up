@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   corsHeaders,
+  enforceAiQuota,
   handleError,
   HttpError,
   jsonResponse,
@@ -140,6 +141,7 @@ Use 30–120 minute sessions, schedule all sessions before the due date, and ret
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not configured");
+    await enforceAiQuota(supabase, "generate-study-plan");
 
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,

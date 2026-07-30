@@ -27,6 +27,7 @@ const createProject = () => {
     scripts: {
       "test:ci:static": "true",
       "test:ci:unit": "true",
+      "test:ci:functions": "true",
       "test:ci:e2e": "true",
       "test:suite": "true",
     },
