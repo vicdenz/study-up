@@ -2,8 +2,15 @@ name: Quality
 
 on:
   workflow_dispatch:
+  deployment_status:
   pull_request:
+    branches:
+      - main
+      - staging
   push:
+    branches:
+      - main
+      - staging
 
 permissions:
   contents: read
@@ -14,6 +21,10 @@ concurrency:
 
 jobs:
   static-analysis:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,6 +39,10 @@ jobs:
       - run: pnpm audit
 
   unit:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,6 +66,10 @@ jobs:
           retention-days: 14
 
   edge-functions:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -66,7 +85,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: deno test --frozen --allow-env supabase/functions
 
-  browser-product:
+  browser-e2e:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -79,7 +102,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:ci:e2e
-      - run: pnpm test:e2e:performance
       - name: Upload Playwright reports and failure evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
@@ -89,7 +111,37 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  performance:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e:performance
+      - name: Upload performance report and failure evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: performance-playwright-report
+          path: artifacts/playwright/
+          if-no-files-found: error
+          retention-days: 14
+
   database:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -103,7 +155,11 @@ jobs:
       - name: Replay migrations and run schema/RLS tests
         run: pnpm test:suite database
 
-  product-integration:
+  integration-e2e:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

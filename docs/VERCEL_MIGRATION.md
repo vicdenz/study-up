@@ -48,7 +48,8 @@ Owner: backend maintainer
    ```zsh
    read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k
    supabase secrets set GEMINI_MODEL=gemini-3.6-flash
-   supabase secrets set ALLOWED_ORIGINS=https://<production-host>,http://localhost:8080
+   supabase secrets set ALLOWED_ORIGINS=https://<production-host>,https://<staging-host>,http://localhost:8080
+   supabase secrets set 'ALLOWED_ORIGIN_PATTERNS=https://study-*-david-daniliucs-projects.vercel.app'
    ```
 
    Paste the Gemini command as one complete line so the secret assignment is not
@@ -94,6 +95,10 @@ Owner: frontend/deployment maintainer
 7. Do not add `GEMINI_API_KEY`, a Supabase secret key, or a service-role key to Vercel. They belong only in Supabase Edge Function secrets.
 8. Deploy a preview. Vercel's Vite guidance requires a rewrite for SPA deep links; this is already encoded in `vercel.json`: <https://vercel.com/docs/frameworks/frontend/vite>.
 9. Add the preview's stable branch alias to the Supabase `ALLOWED_ORIGINS` secret and redeploy both Edge Functions before testing AI calls.
+
+The permanent staging topology and promotion flow are documented in
+[`STAGING.md`](STAGING.md) and declared in
+`../infra/environments/staging.json`.
 
 Exit criteria: preview build succeeds and its deployment contains only the two expected public configuration variables.
 
