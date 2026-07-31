@@ -2,13 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
+import {
+  extractMaterialText,
+} from '@/lib/material-files';
+import {
+  errorMessage,
+  safeStorageFileName,
+} from '@/lib/material-validation';
 
-// Setting worker path for pdfjs-dist
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-type CourseMaterial = Database['public']['Tables']['course_materials']['Row'];
+export type CourseMaterial = Database['public']['Tables']['course_materials']['Row'];
 
 export const useCourseMaterials = (courseId: string) => {
   const queryClient = useQueryClient();
@@ -25,7 +27,14 @@ export const useCourseMaterials = (courseId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return Promise.all((data || []).map(async (material) => {
+        if (!material.file_path) return material;
+        const { data: signedUrl } = await supabase.storage
+          .from('course-materials')
+          .createSignedUrl(material.file_path, 60 * 60);
+
+        return { ...material, url: signedUrl?.signedUrl ?? null };
+      }));
     },
     enabled: !!courseId,
   });
@@ -40,39 +49,10 @@ export const useCourseMaterials = (courseId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Extract text content from the file.
-      let content: string | null = null;
-      if (file.type === 'text/plain') {
-        try {
-          content = await file.text();
-        } catch (e) {
-          console.error("Could not read file content:", e);
-          toast.warning("Could not read content from the text file.");
-        }
-      } else if (file.type === 'application/pdf') {
-        try {
-          const fileBuffer = await file.arrayBuffer();
-          const typedarray = new Uint8Array(fileBuffer);
-          const pdf = await pdfjsLib.getDocument(typedarray).promise;
-          let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item: any) => 'str' in item ? item.str : '').join('');
-            fullText += pageText + '\n\n';
-          }
-          content = fullText.trim();
-          if (!content) {
-            toast.info("No text could be extracted from this PDF. It might be an image-based file (e.g., a scan).");
-          }
-        } catch (e: any) {
-          console.error("Could not read PDF file content:", e);
-          toast.error(`Failed to read content from the PDF file: ${e.message}`);
-        }
-      }
+      const content = await extractMaterialText(file);
 
       // Upload file to storage
-      const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${crypto.randomUUID()}-${safeStorageFileName(file.name)}`;
       const filePath = `${course_id}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
@@ -81,11 +61,6 @@ export const useCourseMaterials = (courseId: string) => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('course-materials')
-        .getPublicUrl(filePath);
-
       // Save material record to database
       const { data, error: insertError } = await supabase
         .from('course_materials')
@@ -93,14 +68,17 @@ export const useCourseMaterials = (courseId: string) => {
           course_id,
           title,
           type,
-          url: publicUrl,
+          url: null,
           file_path: filePath,
           content, // Save extracted content
         })
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        await supabase.storage.from('course-materials').remove([filePath]);
+        throw insertError;
+      }
       return data;
     },
     onSuccess: () => {
@@ -109,7 +87,7 @@ export const useCourseMaterials = (courseId: string) => {
     },
     onError: (error) => {
       console.error('Error uploading material:', error);
-      toast.error('Failed to upload material');
+      toast.error(`Failed to upload material: ${errorMessage(error)}`);
     },
   });
 
@@ -122,7 +100,7 @@ export const useCourseMaterials = (courseId: string) => {
           .remove([material.file_path]);
         
         if (deleteError) {
-          console.error('Error deleting file from storage:', deleteError);
+          throw deleteError;
         }
       }
 
@@ -148,8 +126,8 @@ export const useCourseMaterials = (courseId: string) => {
     materials,
     isLoading,
     error,
-    uploadMaterial: uploadMaterialMutation.mutate,
-    deleteMaterial: deleteMaterialMutation.mutate,
+    uploadMaterial: uploadMaterialMutation.mutateAsync,
+    deleteMaterial: deleteMaterialMutation.mutateAsync,
     isUploading: uploadMaterialMutation.isPending,
     isDeleting: deleteMaterialMutation.isPending,
   };

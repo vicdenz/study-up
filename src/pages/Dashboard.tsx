@@ -1,9 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar, FileText, Brain, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { BookOpen, Calendar, FileText, Brain, CheckCircle, AlertCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import UserMenu from "@/components/UserMenu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useActivities } from "@/hooks/useActivities";
 import { ScrollArea } from "@/components/ui/scroll-area";

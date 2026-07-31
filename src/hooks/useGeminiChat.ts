@@ -1,17 +1,35 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
 
-type AiChat = Database['public']['Tables']['ai_chats']['Row'];
+export type AiChat = Database['public']['Tables']['ai_chats']['Row'];
+
+const isSavedMessage = (value: unknown): value is {
+  id: string;
+  role: ChatMessage["role"];
+  content: string;
+  timestamp: string;
+} => {
+  if (!value || typeof value !== "object") return false;
+
+  const message = value as Record<string, unknown>;
+  return (
+    typeof message.id === "string" &&
+    (message.role === "user" || message.role === "assistant") &&
+    typeof message.content === "string" &&
+    typeof message.timestamp === "string" &&
+    !Number.isNaN(Date.parse(message.timestamp))
+  );
+};
 
 interface UseGeminiChatReturn {
   messages: ChatMessage[];
@@ -37,10 +55,15 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
       }
       const user_id = session.user.id;
 
+      const serializedMessages = messages.map((message) => ({
+        ...message,
+        timestamp: message.timestamp.toISOString(),
+      }));
+
       const { error } = await supabase.from('ai_chats').insert({
         user_id,
         title,
-        messages: messages as any,
+        messages: serializedMessages,
         assignment_id: assignment_id || null,
       });
 
@@ -67,9 +90,12 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
     performSave({ title, assignment_id });
   };
 
-  const loadChat = (chat: AiChat) => {
-    if (chat.messages && Array.isArray(chat.messages)) {
-      const loadedMessages: ChatMessage[] = chat.messages.map((msg: any) => ({
+  const loadChat = useCallback((chat: AiChat) => {
+    if (
+      Array.isArray(chat.messages) &&
+      chat.messages.every(isSavedMessage)
+    ) {
+      const loadedMessages: ChatMessage[] = chat.messages.map((msg) => ({
         id: msg.id,
         role: msg.role,
         content: msg.content,
@@ -80,13 +106,13 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
     } else {
       toast.error("Could not load chat. Invalid format.");
     }
-  };
+  }, []);
 
   const sendMessage = async (message: string, context?: string, imageUrls?: string[]) => {
     if (!message.trim()) return;
 
     const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: 'user',
       content: message,
       timestamp: new Date(),
@@ -112,10 +138,16 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
         return;
       }
 
+      if (typeof data?.response !== "string" || !data.response.trim()) {
+        console.error("Gemini API returned an invalid response");
+        toast.error("The AI provider returned an invalid response");
+        return;
+      }
+
       const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: 'assistant',
-        content: data.response,
+        content: data.response.trim(),
         timestamp: new Date(),
       };
 
@@ -128,9 +160,9 @@ export const useGeminiChat = (): UseGeminiChatReturn => {
     }
   };
 
-  const clearMessages = () => {
+  const clearMessages = useCallback(() => {
     setMessages([]);
-  };
+  }, []);
 
   return {
     messages,

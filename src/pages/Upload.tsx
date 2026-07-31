@@ -29,6 +29,8 @@ import { useCourseMaterials } from '@/hooks/useCourseMaterials';
 import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
 import { useAllAssignments } from '@/hooks/useAssignments';
 import { toast } from 'sonner';
+import type { CourseMaterial } from '@/hooks/useCourseMaterials';
+import type { AssignmentMaterial } from '@/hooks/useAssignmentMaterials';
 
 const Upload = () => {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
@@ -46,17 +48,13 @@ const Upload = () => {
     materials: courseMaterials, 
     uploadMaterial: uploadCourseMaterial, 
     deleteMaterial: deleteCourseMaterial, 
-    isUploading: isUploadingCourseMaterial,
   } = useCourseMaterials(selectedCourse);
 
   const { 
     materials: assignmentMaterials, 
     uploadMaterial: uploadAssignmentMaterial, 
     deleteMaterial: deleteAssignmentMaterial, 
-    isUploading: isUploadingAssignmentMaterial,
   } = useAssignmentMaterials(selectedAssignment);
-
-  const isUploading = isUploadingCourseMaterial || isUploadingAssignmentMaterial;
 
   const courseAssignments = useMemo(() => {
     return assignments.filter(a => a.course_id === selectedCourse);
@@ -83,15 +81,64 @@ const Upload = () => {
     return 'File';
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   const isUploadTargetSelected = (uploadScope === 'course' && !!selectedCourse) || (uploadScope === 'assignment' && !!selectedAssignment);
+
+  const handleFiles = useCallback(async (files: File[]) => {
+    for (const file of files) {
+      const fileId = `${file.name}::${crypto.randomUUID()}`;
+      let progressInterval: ReturnType<typeof setInterval> | undefined;
+
+      try {
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        progressInterval = setInterval(() => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [fileId]: Math.min((prev[fileId] ?? 0) + 10, 90),
+          }));
+        }, 150);
+
+        if (uploadScope === 'course') {
+          await uploadCourseMaterial({
+            course_id: selectedCourse,
+            title: file.name,
+            type: file.type || "application/octet-stream",
+            file,
+          });
+        } else {
+          await uploadAssignmentMaterial({
+            assignment_id: selectedAssignment,
+            title: file.name,
+            type: file.type || "application/octet-stream",
+            file,
+          });
+        }
+
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        setTimeout(() => {
+          setUploadProgress(prev => {
+            const next = { ...prev };
+            delete next[fileId];
+            return next;
+          });
+        }, 1_000);
+      } catch {
+        toast.error(`Failed to upload ${file.name}`);
+        setUploadProgress(prev => {
+          const next = { ...prev };
+          delete next[fileId];
+          return next;
+        });
+      } finally {
+        if (progressInterval) clearInterval(progressInterval);
+      }
+    }
+  }, [
+    selectedAssignment,
+    selectedCourse,
+    uploadAssignmentMaterial,
+    uploadCourseMaterial,
+    uploadScope,
+  ]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -115,7 +162,7 @@ const Upload = () => {
 
     const files = Array.from(e.dataTransfer.files);
     await handleFiles(files);
-  }, [isUploadTargetSelected, uploadScope, selectedCourse, selectedAssignment]);
+  }, [handleFiles, isUploadTargetSelected]);
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isUploadTargetSelected) {
@@ -125,62 +172,6 @@ const Upload = () => {
 
     const files = Array.from(e.target.files || []);
     await handleFiles(files);
-  };
-
-  const handleFiles = async (files: File[]) => {
-    for (const file of files) {
-      try {
-        const fileId = `${file.name}-${Date.now()}`;
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        
-        const progressInterval = setInterval(() => {
-          setUploadProgress(prev => {
-            const currentProgress = prev[fileId] || 0;
-            if (currentProgress >= 95) { // Stop at 95 to wait for server confirmation
-              clearInterval(progressInterval);
-              return prev;
-            }
-            return { ...prev, [fileId]: currentProgress + 10 };
-          });
-        }, 150);
-
-        if (uploadScope === 'course') {
-            await uploadCourseMaterial({
-              course_id: selectedCourse,
-              title: file.name,
-              type: file.type,
-              file: file
-            });
-        } else {
-            await uploadAssignmentMaterial({
-              assignment_id: selectedAssignment,
-              title: file.name,
-              type: file.type,
-              file: file,
-            });
-        }
-        
-        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-        clearInterval(progressInterval);
-
-        setTimeout(() => {
-          setUploadProgress(prev => {
-            const newProgress = { ...prev };
-            delete newProgress[fileId];
-            return newProgress;
-          });
-        }, 1000);
-
-      } catch (error) {
-        toast.error(`Failed to upload ${file.name}`);
-        setUploadProgress(prev => {
-            const newProgress = { ...prev };
-            const fileId = Object.keys(newProgress).find(k => k.startsWith(file.name));
-            if(fileId) delete newProgress[fileId];
-            return newProgress;
-        });
-      }
-    }
   };
 
   const materialsToShow = uploadScope === 'course' ? courseMaterials : assignmentMaterials;
@@ -194,11 +185,11 @@ const Upload = () => {
 
   const materialTypes = [...new Set(materialsToShow.map(m => getFileTypeLabel(m.type)))];
 
-  const handleDelete = (material: any) => {
-    if (uploadScope === 'course') {
-      deleteCourseMaterial(material);
-    } else {
-      deleteAssignmentMaterial(material);
+  const handleDelete = (material: CourseMaterial | AssignmentMaterial) => {
+    if (uploadScope === 'course' && 'course_id' in material) {
+      void deleteCourseMaterial(material);
+    } else if ('assignment_id' in material) {
+      void deleteAssignmentMaterial(material);
     }
   };
 
@@ -322,7 +313,7 @@ const Upload = () => {
                 {Object.entries(uploadProgress).length > 0 && (
                   <div className="space-y-2">
                     {Object.entries(uploadProgress).map(([fileId, progress]) => {
-                      const fileName = fileId.split('-')[0];
+                      const fileName = fileId.split('::')[0];
                       return (
                         <div key={fileId} className="space-y-1">
                           <div className="flex justify-between text-sm">

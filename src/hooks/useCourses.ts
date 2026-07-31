@@ -1,16 +1,15 @@
 
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
-type Course = Database['public']['Tables']['courses']['Row'];
+export type Course = Database['public']['Tables']['courses']['Row'];
 type CourseInsert = Database['public']['Tables']['courses']['Insert'];
 type Assignment = Database['public']['Tables']['assignments']['Row'];
 type CourseMaterial = Database['public']['Tables']['course_materials']['Row'];
 
-interface CourseWithStats extends Course {
+export interface CourseWithStats extends Course {
   assignments?: Assignment[];
   materials?: CourseMaterial[];
   assignmentCount: number;
@@ -132,6 +131,44 @@ export const useCourses = () => {
         .eq('id', courseId)
         .single();
 
+      const [courseMaterialsResult, assignmentsResult] = await Promise.all([
+        supabase
+          .from('course_materials')
+          .select('file_path')
+          .eq('course_id', courseId),
+        supabase
+          .from('assignments')
+          .select('id')
+          .eq('course_id', courseId),
+      ]);
+
+      if (courseMaterialsResult.error) throw courseMaterialsResult.error;
+      if (assignmentsResult.error) throw assignmentsResult.error;
+
+      const assignmentIds = assignmentsResult.data?.map((assignment) => assignment.id) ?? [];
+      const assignmentMaterialsResult = assignmentIds.length
+        ? await supabase
+          .from('assignment_materials')
+          .select('file_path')
+          .in('assignment_id', assignmentIds)
+        : { data: [], error: null };
+
+      if (assignmentMaterialsResult.error) throw assignmentMaterialsResult.error;
+
+      const filePaths = [
+        ...(courseMaterialsResult.data ?? []),
+        ...(assignmentMaterialsResult.data ?? []),
+      ]
+        .map((material) => material.file_path)
+        .filter((path): path is string => Boolean(path));
+
+      if (filePaths.length) {
+        const { error: storageError } = await supabase.storage
+          .from('course-materials')
+          .remove(filePaths);
+        if (storageError) throw storageError;
+      }
+
       const { error } = await supabase
         .from('courses')
         .delete()
@@ -166,8 +203,8 @@ export const useCourses = () => {
     courses,
     isLoading,
     error,
-    createCourse: createCourseMutation.mutate,
-    deleteCourse: deleteCourseMutation.mutate,
+    createCourse: createCourseMutation.mutateAsync,
+    deleteCourse: deleteCourseMutation.mutateAsync,
     isCreating: createCourseMutation.isPending,
     isDeleting: deleteCourseMutation.isPending,
   };

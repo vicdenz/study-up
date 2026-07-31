@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, Upload, MessageSquare } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "@/lib/router";
 import { useProfile } from "@/hooks/useProfile";
 
 const Navigation = () => {

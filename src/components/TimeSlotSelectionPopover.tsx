@@ -24,6 +24,7 @@ const TimeSlotSelectionPopover = ({
   anchorElement
 }: TimeSlotSelectionPopoverProps) => {
   const popoverRef = useRef<HTMLDivElement>(null);
+  const firstActionRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (open && popoverRef.current && anchorElement) {
@@ -36,9 +37,7 @@ const TimeSlotSelectionPopover = ({
       
       // Ensure popover stays within viewport
       const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      let finalLeft = Math.max(8, Math.min(left, viewportWidth - popoverRect.width - 8));
+      const finalLeft = Math.max(8, Math.min(left, viewportWidth - popoverRect.width - 8));
       let finalTop = Math.max(8, top);
       
       // If popover would be above viewport, show it below the anchor
@@ -48,6 +47,7 @@ const TimeSlotSelectionPopover = ({
       
       popoverRef.current.style.left = `${finalLeft}px`;
       popoverRef.current.style.top = `${finalTop}px`;
+      firstActionRef.current?.focus();
     }
   }, [open, anchorElement]);
 
@@ -61,6 +61,7 @@ const TimeSlotSelectionPopover = ({
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onOpenChange(false);
+        anchorElement.focus();
       }
     };
 
@@ -73,7 +74,7 @@ const TimeSlotSelectionPopover = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [open, onOpenChange]);
+  }, [anchorElement, open, onOpenChange]);
 
   const handleCreateStudySession = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,10 +101,14 @@ const TimeSlotSelectionPopover = ({
       ref={popoverRef}
       className="fixed z-50 w-80 bg-white rounded-lg border shadow-lg p-4"
       style={{ position: 'fixed' }}
+      role="dialog"
+      aria-labelledby="time-slot-popover-title"
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">Create event for selected time</h4>
+          <h4 id="time-slot-popover-title" className="font-medium text-sm">
+            Create event for selected time
+          </h4>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-4 w-4" />
             <span>{formatTimeRange(startTime, endTime)}</span>
@@ -112,6 +117,7 @@ const TimeSlotSelectionPopover = ({
         
         <div className="space-y-2">
           <Button
+            ref={firstActionRef}
             onClick={handleCreateStudySession}
             className="w-full justify-start gap-2"
             variant="outline"

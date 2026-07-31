@@ -1,49 +1,71 @@
 
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Route, Switch } from "@/lib/router";
 import AuthWrapper from "@/components/AuthWrapper";
-import Dashboard from "./pages/Dashboard";
-import Courses from "./pages/Courses";
-import CoursePage from "./pages/CoursePage";
-import Notebook from "./pages/Notebook";
-import NoteEditor from "./pages/NoteEditor";
-import Planner from "./pages/Planner";
-import Upload from "./pages/Upload";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import AITutor from "./pages/AITutor";
-import LandingPage from "./pages/LandingPage";
-import AssignmentPage from "./pages/AssignmentPage";
+import NetworkStatus from "@/components/NetworkStatus";
 
-const queryClient = new QueryClient();
+const AITutor = lazy(() => import("./pages/AITutor"));
+const AssignmentPage = lazy(() => import("./pages/AssignmentPage"));
+const Auth = lazy(() => import("./pages/Auth"));
+const CoursePage = lazy(() => import("./pages/CoursePage"));
+const Courses = lazy(() => import("./pages/Courses"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Notebook = lazy(() => import("./pages/Notebook"));
+const NoteEditor = lazy(() => import("./pages/NoteEditor"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Planner = lazy(() => import("./pages/Planner"));
+const Upload = lazy(() => import("./pages/Upload"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const RouteFallback = () => (
+  <div
+    className="flex min-h-screen items-center justify-center bg-gray-50"
+    role="status"
+    aria-live="polite"
+  >
+    <span className="sr-only">Loading page</span>
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <NetworkStatus />
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AuthWrapper>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/:courseId" element={<CoursePage />} />
-            <Route path="/courses/:courseId/assignments/:assignmentId" element={<AssignmentPage />} />
-            <Route path="/notebook" element={<Notebook />} />
-            <Route path="/notebook/note/:noteId" element={<NoteEditor />} />
-            <Route path="/planner" element={<Planner />} />
-            <Route path="/upload" element={<Upload />} />
-            <Route path="/ai-tutor" element={<AITutor />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthWrapper>
-      </BrowserRouter>
+      <AuthWrapper>
+        <Suspense fallback={<RouteFallback />}>
+          <Switch>
+            <Route path="/auth"><Auth /></Route>
+            <Route path="/"><LandingPage /></Route>
+            <Route path="/dashboard"><Dashboard /></Route>
+            <Route path="/courses"><Courses /></Route>
+            <Route path="/courses/:courseId"><CoursePage /></Route>
+            <Route path="/courses/:courseId/assignments/:assignmentId"><AssignmentPage /></Route>
+            <Route path="/notebook"><Notebook /></Route>
+            <Route path="/notebook/note/:noteId"><NoteEditor /></Route>
+            <Route path="/planner"><Planner /></Route>
+            <Route path="/upload"><Upload /></Route>
+            <Route path="/ai-tutor"><AITutor /></Route>
+            <Route><NotFound /></Route>
+          </Switch>
+        </Suspense>
+      </AuthWrapper>
     </TooltipProvider>
   </QueryClientProvider>
 );

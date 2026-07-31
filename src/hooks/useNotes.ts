@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -7,8 +6,6 @@ import type { Database } from '@/integrations/supabase/types';
 
 type Note = Database['public']['Tables']['notes']['Row'];
 type NoteInsert = Database['public']['Tables']['notes']['Insert'];
-type NoteSummary = Database['public']['Tables']['note_summaries']['Row'];
-
 interface NoteWithSummary extends Note {
   summary?: string;
 }
@@ -33,7 +30,7 @@ export const useNotes = () => {
             .from('note_summaries')
             .select('summary')
             .eq('note_id', note.id)
-            .single();
+            .maybeSingle();
 
           return {
             ...note,
@@ -60,21 +57,13 @@ export const useNotes = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       toast.success('Note created successfully!');
-      // Handle callback if provided
-      if (context?.onSuccess) {
-        context.onSuccess(data);
-      }
     },
-    onError: (error, variables, context) => {
+    onError: (error) => {
       console.error('Error creating note:', error);
       toast.error('Failed to create note');
-      // Handle callback if provided
-      if (context?.onError) {
-        context.onError(error);
-      }
     },
   });
 
@@ -90,21 +79,13 @@ export const useNotes = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       toast.success('Note updated successfully!');
-      // Handle callback if provided
-      if (context?.onSuccess) {
-        context.onSuccess(data);
-      }
     },
-    onError: (error, variables, context) => {
+    onError: (error) => {
       console.error('Error updating note:', error);
       toast.error('Failed to update note');
-      // Handle callback if provided
-      if (context?.onError) {
-        context.onError(error);
-      }
     },
   });
 
@@ -134,17 +115,29 @@ export const useNotes = () => {
         throw new Error('Note content not found');
       }
 
-      // Simple AI summary - truncate content to first 100 characters
-      const summary = note.content.length > 100 
-        ? note.content.substring(0, 100) + '...'
-        : note.content;
+      const { data: summaryData, error: summaryError } =
+        await supabase.functions.invoke<{ response?: string; error?: string }>(
+          'chat-with-gemini',
+          {
+            body: {
+              message:
+                'Summarize these notes into a concise paragraph with the most important concepts and conclusions. Return only the summary.',
+              context: note.content.slice(0, 50_000),
+            },
+          },
+        );
+
+      if (summaryError) throw summaryError;
+      if (!summaryData?.response) {
+        throw new Error(summaryData?.error || 'The AI returned an empty summary');
+      }
 
       const { data, error } = await supabase
         .from('note_summaries')
         .upsert({
           note_id: noteId,
-          summary: summary
-        })
+          summary: summaryData.response.trim(),
+        }, { onConflict: 'note_id' })
         .select()
         .single();
 
@@ -161,21 +154,12 @@ export const useNotes = () => {
     },
   });
 
-  // Enhanced create and update functions that accept callbacks
-  const createNote = (noteData: Omit<NoteInsert, 'user_id'>, callbacks?: { onSuccess?: (data: any) => void; onError?: (error: any) => void }) => {
-    createNoteMutation.mutate(noteData, callbacks);
-  };
-
-  const updateNote = (noteData: Partial<Note> & { id: string }, callbacks?: { onSuccess?: (data: any) => void; onError?: (error: any) => void }) => {
-    updateNoteMutation.mutate(noteData, callbacks);
-  };
-
   return {
     notes,
     isLoading,
     error,
-    createNote,
-    updateNote,
+    createNote: createNoteMutation.mutateAsync,
+    updateNote: updateNoteMutation.mutateAsync,
     deleteNote: deleteNoteMutation.mutate,
     generateSummary: generateSummaryMutation.mutate,
     isCreating: createNoteMutation.isPending,

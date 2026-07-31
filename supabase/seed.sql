@@ -1,0 +1,3 @@
+-- Intentionally contains no login-capable users or production-derived data.
+-- Run `pnpm e2e:user:local` to create a localhost-only E2E account after
+-- starting the local stack.

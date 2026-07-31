@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@/lib/router';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Brain, Send, Trash2, FileText, Save } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import UserMenu from '@/components/UserMenu';
 import { useGeminiChat } from '@/hooks/useGeminiChat';
+import type { AiChat } from '@/hooks/useGeminiChat';
 import ReactMarkdown from 'react-markdown';
 import { useCourseMaterials } from '@/hooks/useCourseMaterials';
 import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
@@ -26,21 +27,23 @@ const highlightStyle = `
 }
 `;
 
+interface AITutorLocationState {
+  courseId?: string;
+  courseName?: string;
+  assignmentId?: string;
+  assignmentDetails?: { title: string; description: string };
+  chatToLoad?: AiChat;
+}
+
 const AITutor = () => {
   const [inputMessage, setInputMessage] = useState('');
   const { messages, isLoading, sendMessage, clearMessages, saveChat, isSaving, loadChat } = useGeminiChat();
-  const location = useLocation();
+  const location = useLocation<AITutorLocationState>();
   const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const { assignments } = useAllAssignments();
 
-  const locationState = location.state as {
-    courseId?: string;
-    courseName?: string;
-    assignmentId?: string;
-    assignmentDetails?: { title: string; description: string };
-    chatToLoad?: any;
-  } | null;
+  const locationState = location.state;
 
   // For highlighting the latest assistant message
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -78,14 +81,6 @@ const AITutor = () => {
     prevMessagesLength.current = messages.length;
     scrollToBottom();
   }, [messages]);
-
-  useEffect(() => {
-    // If we have course context and no messages yet, log a greeting
-    if (locationState?.courseName && messages.length === 0) {
-      const greeting = `Hello! I'm here to help you with ${locationState.courseName}. What would you like to know or work on?`;
-      // We don't automatically send this as a message, just show it as context
-    }
-  }, [locationState, messages.length]);
 
   const handleSaveChat = (data: { title: string; assignment_id?: string }) => {
     const finalData = { ...data };
@@ -200,7 +195,7 @@ const AITutor = () => {
               <CardHeader>
                 <CardTitle className="flex items-center flex-wrap">
                   <Brain className="h-5 w-5 mr-2" />
-                  Chat with AI Tutor (Powered by Gemini 2.0 Flash)
+                  Chat with AI Tutor (Powered by Gemini)
                   {locationState?.courseName && (
                     <span className="ml-2 text-sm font-normal text-gray-500">
                       - {locationState.courseName}
@@ -219,7 +214,7 @@ const AITutor = () => {
                       <div>
                         <span className="font-semibold">This chat has extra context:</span>
                         <ul className="list-disc list-inside mt-1">
-                          {hasAssignmentContext && <li>Assignment: "{locationState.assignmentDetails.title}"</li>}
+                          {hasAssignmentContext && <li>Assignment: "{locationState?.assignmentDetails?.title}"</li>}
                           {hasCourseMats && <li>{courseMaterials.length} course material(s)</li>}
                           {hasAssignmentMats && <li>{assignmentMaterials.length} assignment material(s)</li>}
                         </ul>
@@ -346,6 +341,7 @@ const AITutor = () => {
                     className="flex-1"
                   />
                   <Button
+                    aria-label="Send message"
                     onClick={handleSendMessage}
                     disabled={isLoading || !inputMessage.trim()}
                   >

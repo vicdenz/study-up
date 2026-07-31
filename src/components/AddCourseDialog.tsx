@@ -14,7 +14,7 @@ interface AddCourseDialogProps {
     code: string;
     description?: string;
     color: string;
-  }) => void;
+  }) => Promise<unknown>;
   isCreating: boolean;
 }
 
@@ -38,25 +38,27 @@ const AddCourseDialog = ({ onAddCourse, isCreating }: AddCourseDialogProps) => {
     color: 'bg-blue-500'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.code.trim()) return;
 
-    onAddCourse({
-      name: formData.name.trim(),
-      code: formData.code.trim(),
-      description: formData.description.trim() || undefined,
-      color: formData.color
-    });
-
-    // Reset form and close dialog
-    setFormData({
-      name: '',
-      code: '',
-      description: '',
-      color: 'bg-blue-500'
-    });
-    setOpen(false);
+    try {
+      await onAddCourse({
+        name: formData.name.trim(),
+        code: formData.code.trim(),
+        description: formData.description.trim() || undefined,
+        color: formData.color
+      });
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        color: 'bg-blue-500'
+      });
+      setOpen(false);
+    } catch {
+      // The mutation toast reports the failure and the dialog stays open.
+    }
   };
 
   return (
