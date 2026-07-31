@@ -55,11 +55,13 @@ const quotaClient = (
 
 Deno.test("CORS reflects an explicitly allowed origin", () => {
   const previous = Deno.env.get("ALLOWED_ORIGINS");
+  const previousPatterns = Deno.env.get("ALLOWED_ORIGIN_PATTERNS");
   try {
     Deno.env.set(
       "ALLOWED_ORIGINS",
       "https://preview.example,https://studyup.example",
     );
+    Deno.env.delete("ALLOWED_ORIGIN_PATTERNS");
 
     const headers = corsHeaders(
       request(null, { headers: { origin: "https://studyup.example" } }),
@@ -70,41 +72,101 @@ Deno.test("CORS reflects an explicitly allowed origin", () => {
       "https://studyup.example",
     );
     assertEquals(headers.Vary, "Origin");
+    assertEquals(headers["Access-Control-Max-Age"], "86400");
   } finally {
     if (previous === undefined) Deno.env.delete("ALLOWED_ORIGINS");
     else Deno.env.set("ALLOWED_ORIGINS", previous);
+    if (previousPatterns === undefined) {
+      Deno.env.delete("ALLOWED_ORIGIN_PATTERNS");
+    } else {
+      Deno.env.set("ALLOWED_ORIGIN_PATTERNS", previousPatterns);
+    }
   }
 });
 
-Deno.test("CORS does not reflect an untrusted origin", () => {
+Deno.test("CORS allows only project-scoped Vercel preview patterns", () => {
   const previous = Deno.env.get("ALLOWED_ORIGINS");
+  const previousPatterns = Deno.env.get("ALLOWED_ORIGIN_PATTERNS");
   try {
     Deno.env.set("ALLOWED_ORIGINS", "https://studyup.example");
-
-    const headers = corsHeaders(
-      request(null, { headers: { origin: "https://attacker.example" } }),
+    Deno.env.set(
+      "ALLOWED_ORIGIN_PATTERNS",
+      "https://study-*-david-daniliucs-projects.vercel.app",
     );
 
-    assertEquals(
-      headers["Access-Control-Allow-Origin"],
-      "https://studyup.example",
-    );
+    for (
+      const origin of [
+        "https://study-up-git-staging-david-daniliucs-projects.vercel.app",
+        "https://study-abc123-david-daniliucs-projects.vercel.app",
+      ]
+    ) {
+      const headers = corsHeaders(request(null, { headers: { origin } }));
+      assertEquals(headers["Access-Control-Allow-Origin"], origin);
+    }
   } finally {
     if (previous === undefined) Deno.env.delete("ALLOWED_ORIGINS");
     else Deno.env.set("ALLOWED_ORIGINS", previous);
+    if (previousPatterns === undefined) {
+      Deno.env.delete("ALLOWED_ORIGIN_PATTERNS");
+    } else {
+      Deno.env.set("ALLOWED_ORIGIN_PATTERNS", previousPatterns);
+    }
+  }
+});
+
+Deno.test("CORS does not reflect untrusted or pattern-confusion origins", () => {
+  const previous = Deno.env.get("ALLOWED_ORIGINS");
+  const previousPatterns = Deno.env.get("ALLOWED_ORIGIN_PATTERNS");
+  try {
+    Deno.env.set("ALLOWED_ORIGINS", "https://studyup.example");
+    Deno.env.set(
+      "ALLOWED_ORIGIN_PATTERNS",
+      "https://study-*-david-daniliucs-projects.vercel.app",
+    );
+
+    for (
+      const origin of [
+        "https://attacker.example",
+        "http://study-up-git-staging-david-daniliucs-projects.vercel.app",
+        "https://study-up-git-staging-david-daniliucs-projects.vercel.app.attacker.example",
+        "https://study-.vercel.app",
+      ]
+    ) {
+      const headers = corsHeaders(request(null, { headers: { origin } }));
+      assertEquals(headers["Access-Control-Allow-Origin"], "null");
+    }
+  } finally {
+    if (previous === undefined) Deno.env.delete("ALLOWED_ORIGINS");
+    else Deno.env.set("ALLOWED_ORIGINS", previous);
+    if (previousPatterns === undefined) {
+      Deno.env.delete("ALLOWED_ORIGIN_PATTERNS");
+    } else {
+      Deno.env.set("ALLOWED_ORIGIN_PATTERNS", previousPatterns);
+    }
   }
 });
 
 Deno.test("CORS fails closed when no origins are configured or supplied", () => {
   const previous = Deno.env.get("ALLOWED_ORIGINS");
+  const previousPatterns = Deno.env.get("ALLOWED_ORIGIN_PATTERNS");
   try {
     Deno.env.delete("ALLOWED_ORIGINS");
+    Deno.env.delete("ALLOWED_ORIGIN_PATTERNS");
 
-    const headers = corsHeaders(request());
-
-    assertEquals(headers["Access-Control-Allow-Origin"], "null");
+    for (
+      const candidate of [
+        request(),
+        request(null, { headers: { origin: "https://unexpected.example" } }),
+      ]
+    ) {
+      const headers = corsHeaders(candidate);
+      assertEquals(headers["Access-Control-Allow-Origin"], "null");
+    }
   } finally {
     if (previous !== undefined) Deno.env.set("ALLOWED_ORIGINS", previous);
+    if (previousPatterns !== undefined) {
+      Deno.env.set("ALLOWED_ORIGIN_PATTERNS", previousPatterns);
+    }
   }
 });
 
