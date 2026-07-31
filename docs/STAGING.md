@@ -50,6 +50,24 @@ separate staging project before enabling this lifecycle. The intended state is
 declared in `infra/environments/staging.json`; no production data has been
 copied while the feature is unavailable.
 
+After enabling Pro branching, create the persistent branch with:
+
+```bash
+pnpm exec supabase branches create staging \
+  --project-ref hzkwaecgggkjikwlvghi \
+  --region us-east-1 \
+  --size micro \
+  --persistent \
+  --with-data \
+  --git-branch staging
+```
+
+The automatic post-`main` reset requires a fine-grained Supabase access token
+with branch-management write permission, stored as the GitHub Actions secret
+`SUPABASE_ACCESS_TOKEN`. That credential is intentionally not created by this
+repository because it grants control-plane access and must be issued by the
+project owner after the plan upgrade.
+
 ## AI CORS policy
 
 Supabase Edge Functions keep exact production and staging origins in
