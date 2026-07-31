@@ -3,28 +3,22 @@
   "type": "object",
   "required": ["name", "git", "github", "vercel", "supabase"],
   "properties": {
-    "name": { "const": "staging" },
+    "name": { "type": "string", "enum": ["staging", "production"] },
     "git": {
       "type": "object",
-      "required": ["repository", "branch", "productionBranch", "requiredChecks"]
+      "required": ["repository", "branch", "requiredChecks"]
     },
     "github": {
       "type": "object",
-      "required": [
-        "environment",
-        "branchPolicy",
-        "requiredPullRequestApprovals",
-        "dismissStaleReviews",
-        "requireConversationResolution"
-      ]
+      "required": ["branchPolicy", "requiredPullRequestApprovals"]
     },
     "vercel": {
       "type": "object",
-      "required": ["project", "target", "branchAlias", "customEnvironment"]
+      "required": ["project", "target"]
     },
     "supabase": {
       "type": "object",
-      "required": ["allowedOrigins", "allowedOriginPatterns"]
+      "required": ["projectRef"]
     }
   }
 }

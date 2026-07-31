@@ -28,8 +28,27 @@ The desired state is declared in
 5. Merge only after staging verification is green.
 
 The GitHub `staging` environment accepts deployments only from the `staging`
-branch. The branch requires one approval, dismisses stale approvals, requires
-resolved conversations, and rejects force pushes and deletion.
+branch. The branch allows ordinary direct pushes, pulls, rebases, and merges;
+it rejects force pushes and deletion. The seven quality checks run on staging
+for feedback but are required for `main`, not for direct staging work.
+
+The `main` branch owns the seven required checks and strict up-to-date rule.
+It does not require an approval, which keeps the workflow practical for a
+single maintainer.
+
+## Supabase staging database
+
+The desired database topology is a persistent Supabase `staging` branch in the
+same Supabase project, cloned with production data and reset after each
+production merge. Supabase implements this as an isolated environment with its
+own database, Auth, Storage, Edge Functions, and credentials—not as a second
+schema inside production.
+
+The current Supabase organization is on a plan where branching is unavailable
+(`402 entitlement_required`). Upgrade the organization to Pro or provide a
+separate staging project before enabling this lifecycle. The intended state is
+declared in `infra/environments/staging.json`; no production data has been
+copied while the feature is unavailable.
 
 ## AI CORS policy
 

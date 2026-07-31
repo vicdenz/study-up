@@ -48,20 +48,16 @@ const createProject = () => {
       repository: "vicdenz/study-up",
       branch: "staging",
       productionBranch: "main",
-      requiredChecks: [
-        "static-analysis",
-        "unit",
-        "edge-functions",
-        "browser-e2e",
-        "performance",
-        "database",
-        "integration-e2e",
-      ],
+      requiredChecks: [],
+      directPushesAllowed: true,
+      forcePushesAllowed: false,
+      deletionAllowed: false,
     },
     github: {
       environment: "staging",
       branchPolicy: "selected",
-      requiredPullRequestApprovals: 1,
+      requiredPullRequestApprovals: 0,
+      requireConversationResolution: false,
     },
     vercel: {
       target: "preview",
@@ -77,7 +73,38 @@ const createProject = () => {
       allowedOriginPatterns: [
         "https://study-*-david-daniliucs-projects.vercel.app",
       ],
+      strategy: "persistent-branch",
+      projectRef: "hzkwaecgggkjikwlvghi",
+      branch: "staging",
+      withProductionData: true,
+      resetOnProductionMerge: true,
+      requiresPlan: "pro",
     },
+  });
+  writeJson(root, "infra/environments/production.json", {
+    name: "production",
+    git: {
+      repository: "vicdenz/study-up",
+      branch: "main",
+      requiredChecks: [
+        "static-analysis",
+        "unit",
+        "edge-functions",
+        "browser-e2e",
+        "performance",
+        "database",
+        "integration-e2e",
+      ],
+      forcePushesAllowed: false,
+      deletionAllowed: false,
+    },
+    github: {
+      branchPolicy: "protected",
+      requiredPullRequestApprovals: 0,
+      requireUpToDateBranch: true,
+    },
+    vercel: { project: "study-up", target: "production" },
+    supabase: { projectRef: "hzkwaecgggkjikwlvghi", branch: "main" },
   });
   writeFileSync(
     resolve(root, ".github/workflows/quality.yml"),
@@ -297,18 +324,48 @@ describe("infrastructure verifier", () => {
     );
   });
 
-  test("requires all isolated CI jobs at the staging gate", () => {
+  test("allows ordinary staging pushes without PR checks", () => {
     const root = createProject();
     const path = resolve(root, "infra/environments/staging.json");
     const staging = JSON.parse(readFileSync(path, "utf8"));
-    staging.git.requiredChecks = ["unit"];
+    staging.git.directPushesAllowed = false;
     writeJson(root, "infra/environments/staging.json", staging);
 
     const result = runVerifier(root);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
-      "must require every independent quality job",
+      "must allow direct ordinary Git operations",
+    );
+  });
+
+  test("requires production to own the quality gate", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/production.json");
+    const production = JSON.parse(readFileSync(path, "utf8"));
+    production.git.requiredChecks = [];
+    writeJson(root, "infra/environments/production.json", production);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Production must own the seven checks",
+    );
+  });
+
+  test("requires the production-data staging reset policy", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/staging.json");
+    const staging = JSON.parse(readFileSync(path, "utf8"));
+    staging.supabase.resetOnProductionMerge = false;
+    writeJson(root, "infra/environments/staging.json", staging);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "isolated production-data branch lifecycle",
     );
   });
 

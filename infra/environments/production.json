@@ -1,0 +1,36 @@
+{
+  "$schema": "./environment.schema.json",
+  "name": "production",
+  "git": {
+    "repository": "vicdenz/study-up",
+    "branch": "main",
+    "requiredChecks": [
+      "static-analysis",
+      "unit",
+      "edge-functions",
+      "browser-e2e",
+      "performance",
+      "database",
+      "integration-e2e"
+    ],
+    "directPushesAllowed": true,
+    "forcePushesAllowed": false,
+    "deletionAllowed": false
+  },
+  "github": {
+    "branchPolicy": "protected",
+    "requiredPullRequestApprovals": 0,
+    "dismissStaleReviews": false,
+    "requireConversationResolution": false,
+    "requireUpToDateBranch": true
+  },
+  "vercel": {
+    "project": "study-up",
+    "target": "production",
+    "productionBranch": "main"
+  },
+  "supabase": {
+    "projectRef": "hzkwaecgggkjikwlvghi",
+    "branch": "main"
+  }
+}
