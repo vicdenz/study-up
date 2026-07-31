@@ -9,6 +9,9 @@ const packageManifest = JSON.parse(readFileSync("package.json", "utf8"));
 const staging = JSON.parse(
   readFileSync("infra/environments/staging.json", "utf8"),
 );
+const production = JSON.parse(
+  readFileSync("infra/environments/production.json", "utf8"),
+);
 const pnpmWorkspace = readFileSync("pnpm-workspace.yaml", "utf8");
 const qualityWorkflow = readFileSync(".github/workflows/quality.yml", "utf8");
 const stagingWorkflow = readFileSync(
@@ -89,17 +92,19 @@ if (
 ) {
   fail("The staging declaration must target vicdenz/study-up staging -> main.");
 }
-if (
-  JSON.stringify(staging.git.requiredChecks) !== JSON.stringify(expectedChecks)
-) {
-  fail("The staging declaration must require every independent quality job.");
+if (staging.git.requiredChecks.length !== 0 || !staging.git.directPushesAllowed) {
+  fail("Staging must allow direct ordinary Git operations without PR checks.");
+}
+if (staging.git.forcePushesAllowed || staging.git.deletionAllowed) {
+  fail("Staging must reject force pushes and branch deletion.");
 }
 if (
   staging.github?.environment !== "staging" ||
   staging.github?.branchPolicy !== "selected" ||
-  staging.github?.requiredPullRequestApprovals !== 1
+  staging.github?.requiredPullRequestApprovals !== 0 ||
+  staging.github?.requireConversationResolution !== false
 ) {
-  fail("The staging GitHub environment and review policy are incomplete.");
+  fail("The staging GitHub environment must not require PR approval.");
 }
 if (
   staging.vercel?.target !== "preview" ||
@@ -134,6 +139,27 @@ if (
   !stagingWorkflow.includes("name: staging")
 ) {
   fail("The staging gate must target only the protected staging environment.");
+}
+if (
+  production.name !== "production" ||
+  production.git?.repository !== "vicdenz/study-up" ||
+  production.git?.branch !== "main" ||
+  JSON.stringify(production.git.requiredChecks) !== JSON.stringify(expectedChecks) ||
+  production.github?.requiredPullRequestApprovals !== 0 ||
+  production.github?.requireUpToDateBranch !== true ||
+  production.git.forcePushesAllowed ||
+  production.git.deletionAllowed
+) {
+  fail("Production must own the seven checks and protected branch controls.");
+}
+if (
+  staging.supabase?.strategy !== "persistent-branch" ||
+  staging.supabase?.branch !== "staging" ||
+  staging.supabase?.withProductionData !== true ||
+  staging.supabase?.resetOnProductionMerge !== true ||
+  staging.supabase?.requiresPlan !== "pro"
+) {
+  fail("Staging must declare its isolated production-data branch lifecycle.");
 }
 
 const vercelText = JSON.stringify(vercel);
