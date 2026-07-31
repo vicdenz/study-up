@@ -84,6 +84,8 @@ const createProject = () => {
     [
       "on:",
       "  deployment_status:",
+      "concurrency:",
+      "  group: quality-${{ github.event_name }}-${{ github.event.deployment.id }}-${{ github.event.deployment_status.state }}",
       "jobs:",
       "  static-analysis:",
       "  unit:",
@@ -337,6 +339,25 @@ describe("infrastructure verifier", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
       "must run for successful Vercel deployment statuses",
+    );
+  });
+
+  test("isolates push and deployment concurrency groups", () => {
+    const root = createProject();
+    const path = resolve(root, ".github/workflows/quality.yml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace(
+        "quality-${{ github.event_name }}-${{ github.event.deployment.id }}-${{ github.event.deployment_status.state }}",
+        "quality-${{ github.ref }}",
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must use isolated concurrency groups",
     );
   });
 
