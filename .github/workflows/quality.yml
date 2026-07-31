@@ -16,7 +16,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.ref }}
+  group: >-
+    quality-${{ github.workflow }}-${{ github.event_name }}-${{
+    github.event.deployment.id || github.ref }}-${{
+    github.event.deployment_status.state || 'source' }}
   cancel-in-progress: true
 
 jobs:

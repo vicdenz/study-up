@@ -122,6 +122,13 @@ if (
   fail("Quality checks must run for successful Vercel deployment statuses.");
 }
 if (
+  !qualityWorkflow.includes("github.event_name") ||
+  !qualityWorkflow.includes("github.event.deployment.id") ||
+  !qualityWorkflow.includes("github.event.deployment_status.state")
+) {
+  fail("Push and deployment quality runs must use isolated concurrency groups.");
+}
+if (
   !/^\s{6}- staging\s*$/m.test(stagingWorkflow) ||
   !/^\s{4}environment:\s*$/m.test(stagingWorkflow) ||
   !stagingWorkflow.includes("name: staging")
