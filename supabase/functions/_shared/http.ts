@@ -18,19 +18,46 @@ const allowedOrigins = () =>
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+const allowedOriginPatterns = () =>
+  (Deno.env.get("ALLOWED_ORIGIN_PATTERNS") ?? "")
+    .split(",")
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
+
+const matchesOriginPattern = (origin: string, pattern: string) => {
+  // Origin patterns deliberately support only HTTPS hostnames and a wildcard
+  // within a hostname label. Paths, credentials, query strings, and broad
+  // scheme wildcards are rejected.
+  if (
+    !/^https:\/\/[a-z0-9*.-]+(?::\d+)?$/i.test(pattern) ||
+    !pattern.includes("*")
+  ) {
+    return false;
+  }
+
+  const expression = escapeRegExp(pattern).replaceAll("*", "[a-z0-9-]+");
+  return new RegExp(`^${expression}$`, "i").test(origin);
+};
+
+const isAllowedOrigin = (origin: string) =>
+  allowedOrigins().includes(origin) ||
+  allowedOriginPatterns().some((pattern) =>
+    matchesOriginPattern(origin, pattern)
+  );
+
 export const corsHeaders = (request: Request) => {
   const origin = request.headers.get("origin");
-  const configuredOrigins = allowedOrigins();
-  const allowedOrigin = origin &&
-      (configuredOrigins.length === 0 || configuredOrigins.includes(origin))
-    ? origin
-    : configuredOrigins[0] ?? "null";
+  const allowedOrigin = origin && isAllowedOrigin(origin) ? origin : "null";
 
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
 };
@@ -90,7 +117,9 @@ export const enforceAiQuota = async (
   if (!quota.allowed) {
     throw new HttpError(
       429,
-      `AI request limit reached. Try again after ${quota.reset_at ?? "the current usage window"}`,
+      `AI request limit reached. Try again after ${
+        quota.reset_at ?? "the current usage window"
+      }`,
     );
   }
 
