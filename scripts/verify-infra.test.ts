@@ -21,6 +21,8 @@ const createProject = () => {
   const root = mkdtempSync(resolve(tmpdir(), "studyup-infra-test-"));
   temporaryProjects.push(root);
   mkdirSync(resolve(root, "supabase/migrations"), { recursive: true });
+  mkdirSync(resolve(root, "infra/environments"), { recursive: true });
+  mkdirSync(resolve(root, ".github/workflows"), { recursive: true });
 
   writeJson(root, "package.json", {
     packageManager: "pnpm@10.34.5",
@@ -40,6 +42,74 @@ const createProject = () => {
     outputDirectory: "dist",
     rewrites: [{ source: "/(.*)", destination: "/index.html" }],
   });
+  writeJson(root, "infra/environments/staging.json", {
+    name: "staging",
+    git: {
+      repository: "vicdenz/study-up",
+      branch: "staging",
+      productionBranch: "main",
+      requiredChecks: [
+        "static-analysis",
+        "unit",
+        "edge-functions",
+        "browser-e2e",
+        "performance",
+        "database",
+        "integration-e2e",
+      ],
+    },
+    github: {
+      environment: "staging",
+      branchPolicy: "selected",
+      requiredPullRequestApprovals: 1,
+    },
+    vercel: {
+      target: "preview",
+      customEnvironment: false,
+      branchAlias:
+        "https://study-up-git-staging-david-daniliucs-projects.vercel.app",
+    },
+    supabase: {
+      allowedOrigins: [
+        "https://study-up-pi.vercel.app",
+        "https://study-up-git-staging-david-daniliucs-projects.vercel.app",
+      ],
+      allowedOriginPatterns: [
+        "https://study-*-david-daniliucs-projects.vercel.app",
+      ],
+    },
+  });
+  writeFileSync(
+    resolve(root, ".github/workflows/quality.yml"),
+    [
+      "on:",
+      "  deployment_status:",
+      "jobs:",
+      "  static-analysis:",
+      "  unit:",
+      "  edge-functions:",
+      "  browser-e2e:",
+      "  performance:",
+      "  database:",
+      "  integration-e2e:",
+      "    if: github.event.deployment.creator.login == 'vercel[bot]'",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    resolve(root, ".github/workflows/staging-gate.yml"),
+    [
+      "on:",
+      "  push:",
+      "    branches:",
+      "      - staging",
+      "jobs:",
+      "  gate:",
+      "    environment:",
+      "      name: staging",
+      "",
+    ].join("\n"),
+  );
   writeFileSync(resolve(root, ".vercelignore"), "/supabase\n");
   writeFileSync(resolve(root, "pnpm-workspace.yaml"), 'packages:\n  - "."\n');
   writeFileSync(resolve(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
@@ -208,6 +278,82 @@ describe("infrastructure verifier", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("SPA deep-link rewrite is missing");
+  });
+
+  test("requires the canonical repository promotion path", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/staging.json");
+    const staging = JSON.parse(readFileSync(path, "utf8"));
+    staging.git.repository = "legacy-owner/study-up";
+    writeJson(root, "infra/environments/staging.json", staging);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must target vicdenz/study-up staging -> main",
+    );
+  });
+
+  test("requires all isolated CI jobs at the staging gate", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/staging.json");
+    const staging = JSON.parse(readFileSync(path, "utf8"));
+    staging.git.requiredChecks = ["unit"];
+    writeJson(root, "infra/environments/staging.json", staging);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must require every independent quality job",
+    );
+  });
+
+  test("rejects production targeting for staging deployments", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/staging.json");
+    const staging = JSON.parse(readFileSync(path, "utf8"));
+    staging.vercel.target = "production";
+    staging.vercel.customEnvironment = true;
+    writeJson(root, "infra/environments/staging.json", staging);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("branch-specific Vercel Preview alias");
+  });
+
+  test("requires quality checks after successful Vercel deployments", () => {
+    const root = createProject();
+    const path = resolve(root, ".github/workflows/quality.yml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace("  deployment_status:\n", ""),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must run for successful Vercel deployment statuses",
+    );
+  });
+
+  test("requires the protected staging workflow to stay branch-scoped", () => {
+    const root = createProject();
+    const path = resolve(root, ".github/workflows/staging-gate.yml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace("      - staging", "      - main"),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "must target only the protected staging environment",
+    );
   });
 
   test("rejects an unrooted Supabase ignore that hides the browser client", () => {

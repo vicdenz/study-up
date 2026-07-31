@@ -6,7 +6,15 @@ const fail = (message) => {
 
 const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 const packageManifest = JSON.parse(readFileSync("package.json", "utf8"));
+const staging = JSON.parse(
+  readFileSync("infra/environments/staging.json", "utf8"),
+);
 const pnpmWorkspace = readFileSync("pnpm-workspace.yaml", "utf8");
+const qualityWorkflow = readFileSync(".github/workflows/quality.yml", "utf8");
+const stagingWorkflow = readFileSync(
+  ".github/workflows/staging-gate.yml",
+  "utf8",
+);
 const vercelIgnore = readFileSync(".vercelignore", "utf8")
   .split(/\r?\n/)
   .map((line) => line.trim())
@@ -62,6 +70,63 @@ if (
   )
 ) {
   fail("The SPA deep-link rewrite is missing.");
+}
+
+const expectedChecks = [
+  "static-analysis",
+  "unit",
+  "edge-functions",
+  "browser-e2e",
+  "performance",
+  "database",
+  "integration-e2e",
+];
+if (
+  staging.name !== "staging" ||
+  staging.git?.repository !== "vicdenz/study-up" ||
+  staging.git?.branch !== "staging" ||
+  staging.git?.productionBranch !== "main"
+) {
+  fail("The staging declaration must target vicdenz/study-up staging -> main.");
+}
+if (
+  JSON.stringify(staging.git.requiredChecks) !== JSON.stringify(expectedChecks)
+) {
+  fail("The staging declaration must require every independent quality job.");
+}
+if (
+  staging.github?.environment !== "staging" ||
+  staging.github?.branchPolicy !== "selected" ||
+  staging.github?.requiredPullRequestApprovals !== 1
+) {
+  fail("The staging GitHub environment and review policy are incomplete.");
+}
+if (
+  staging.vercel?.target !== "preview" ||
+  staging.vercel?.customEnvironment !== false ||
+  !/^https:\/\/study-up-git-staging-[a-z0-9-]+\.vercel\.app$/.test(
+    staging.vercel?.branchAlias ?? "",
+  )
+) {
+  fail("Staging must use its permanent branch-specific Vercel Preview alias.");
+}
+for (const job of expectedChecks) {
+  if (!new RegExp(`^  ${job}:`, "m").test(qualityWorkflow)) {
+    fail(`Quality workflow is missing the independent ${job} job.`);
+  }
+}
+if (
+  !/^\s{2}deployment_status:\s*$/m.test(qualityWorkflow) ||
+  !qualityWorkflow.includes("github.event.deployment.creator.login == 'vercel[bot]'")
+) {
+  fail("Quality checks must run for successful Vercel deployment statuses.");
+}
+if (
+  !/^\s{6}- staging\s*$/m.test(stagingWorkflow) ||
+  !/^\s{4}environment:\s*$/m.test(stagingWorkflow) ||
+  !stagingWorkflow.includes("name: staging")
+) {
+  fail("The staging gate must target only the protected staging environment.");
 }
 
 const vercelText = JSON.stringify(vercel);

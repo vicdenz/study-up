@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "git", "github", "vercel", "supabase"],
+  "properties": {
+    "name": { "const": "staging" },
+    "git": {
+      "type": "object",
+      "required": ["repository", "branch", "productionBranch", "requiredChecks"]
+    },
+    "github": {
+      "type": "object",
+      "required": [
+        "environment",
+        "branchPolicy",
+        "requiredPullRequestApprovals",
+        "dismissStaleReviews",
+        "requireConversationResolution"
+      ]
+    },
+    "vercel": {
+      "type": "object",
+      "required": ["project", "target", "branchAlias", "customEnvironment"]
+    },
+    "supabase": {
+      "type": "object",
+      "required": ["allowedOrigins", "allowedOriginPatterns"]
+    }
+  }
+}
