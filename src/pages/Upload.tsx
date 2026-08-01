@@ -29,6 +29,7 @@ import { useCourseMaterials } from '@/hooks/useCourseMaterials';
 import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
 import { useAllAssignments } from '@/hooks/useAssignments';
 import { toast } from 'sonner';
+import { downloadFile } from '@/lib/download-file';
 import type { CourseMaterial } from '@/hooks/useCourseMaterials';
 import type { AssignmentMaterial } from '@/hooks/useAssignmentMaterials';
 
@@ -384,16 +385,37 @@ const Upload = () => {
                               </div>
                             </div>
                             <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={!material.url}
+                                aria-label={`View ${material.title}`}
+                                onClick={() => material.url && window.open(material.url, '_blank', 'noopener,noreferrer')}
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={!material.url}
+                                aria-label={`Download ${material.title}`}
+                                onClick={() => {
+                                  if (!material.url) return;
+                                  void downloadFile(material.url, material.title).catch((error) => {
+                                    console.error('Material download failed:', error);
+                                    toast.error('Failed to download material');
+                                  });
+                                }}
+                              >
                                 <Download className="h-4 w-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon"
                                 className="h-8 w-8 text-red-500 hover:text-red-600"
+                                aria-label={`Delete ${material.title}`}
                                 onClick={() => handleDelete(material)}
                               >
                                 <Trash2 className="h-4 w-4" />
