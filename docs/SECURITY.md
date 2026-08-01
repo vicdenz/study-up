@@ -29,6 +29,10 @@ one complete zsh line from the linked repository:
 read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k
 ```
 
+An actual newline before `GEMINI_API_KEY` splits the command and sends no
+argument. If Supabase returns an HTML `502 Bad Gateway`, do not change or expose
+the key; wait briefly and retry the same command.
+
 Configure the model and exact browser origins separately:
 
 ```bash
