@@ -180,6 +180,7 @@ test.describe("@authenticated authenticated product journeys", () => {
     const noteTitle = uniqueName("E2E Note");
     const noteContent =
       "This note verifies persistence across navigation and a full browser refresh.";
+    const summaryText = `Persistent summary for ${noteTitle}`;
     let noteCreated = false;
 
     try {
@@ -214,25 +215,25 @@ test.describe("@authenticated authenticated product journeys", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ response: "Persistent E2E note summary" }),
+          body: JSON.stringify({ response: summaryText }),
         });
       });
       await page.getByRole("button", { name: "Generate AI Summary" }).click();
       await expect(
-        page.getByText("Persistent E2E note summary", { exact: true }),
+        page.getByText(summaryText, { exact: true }),
       ).toBeVisible({ timeout: 15_000 });
       expect(summaryRequest?.message).toContain("Summarize these notes");
       expect(summaryRequest?.context).toBe(noteContent);
 
       await page.reload({ waitUntil: "domcontentloaded" });
       await expect(
-        page.getByText("Persistent E2E note summary", { exact: true }),
+        page.getByText(summaryText, { exact: true }),
       ).toBeVisible();
       await page.getByPlaceholder("Search notes...").fill("missing-note-query");
       await expect(page.getByText("No notes match your filters")).toBeVisible();
       await page.getByPlaceholder("Search notes...").fill(noteTitle);
       await expect(page.getByText(noteTitle, { exact: true })).toBeVisible();
-      await page.getByText("autosave", { exact: true }).click();
+      await page.getByText("autosave", { exact: true }).first().click();
       await expect(page.getByText(noteTitle, { exact: true })).toBeVisible();
 
       await page.getByRole("button", { name: `Delete ${noteTitle}` }).click();
