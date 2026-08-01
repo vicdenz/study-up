@@ -122,6 +122,10 @@ const createProject = () => {
       "  database:",
       "  integration-e2e:",
       "    if: github.event.deployment.creator.login == 'vercel[bot]'",
+      "    steps:",
+      "      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6",
+      "        with:",
+      "          persist-credentials: false",
       "",
     ].join("\n"),
   );
@@ -261,6 +265,40 @@ describe("infrastructure verifier", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("missing the test:ci:unit test entry point");
+  });
+
+  test("rejects mutable action tags", () => {
+    const root = createProject();
+    const workflowPath = resolve(root, ".github/workflows/quality.yml");
+    writeFileSync(
+      workflowPath,
+      readFileSync(workflowPath, "utf8").replace(
+        "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "actions/checkout@v6",
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must pin actions/checkout@v6 to a full commit SHA");
+  });
+
+  test("requires checkout credentials to be non-persistent", () => {
+    const root = createProject();
+    const workflowPath = resolve(root, ".github/workflows/quality.yml");
+    writeFileSync(
+      workflowPath,
+      readFileSync(workflowPath, "utf8").replace(
+        "          persist-credentials: false\n",
+        "",
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must disable persisted checkout credentials");
   });
 
   test("rejects a custom Vercel install command", () => {
