@@ -8,6 +8,7 @@ import {
   parseJsonObject,
   requireUserClient,
 } from "../_shared/http.ts";
+import { createGeminiRequest } from "../_shared/gemini.ts";
 
 const MAX_MESSAGE_LENGTH = 8_000;
 const MAX_CONTEXT_LENGTH = 50_000;
@@ -162,16 +163,11 @@ serve(async (request) => {
     }
 
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: { maxOutputTokens: 2_048 },
-        }),
-        signal: AbortSignal.timeout(30_000),
-      },
+      createGeminiRequest(GEMINI_MODEL, geminiApiKey, {
+        contents: [{ parts }],
+        generationConfig: { maxOutputTokens: 2_048 },
+      }),
+      { signal: AbortSignal.timeout(30_000) },
     );
 
     if (!geminiResponse.ok) {

@@ -226,6 +226,19 @@ Deno.test("JSON parsing accepts an object body", async () => {
   assertEquals(body, { message: "hello" });
 });
 
+Deno.test("JSON parsing enforces the byte limit without Content-Length", async () => {
+  await assertRejectsHttpError(
+    () =>
+      parseJsonObject(
+        request(JSON.stringify({ message: "x".repeat(100_001) }), {
+          method: "POST",
+        }),
+      ),
+    413,
+    "Request is too large",
+  );
+});
+
 Deno.test("known HTTP errors preserve their safe status and message", async () => {
   const response = handleError(
     request(),
