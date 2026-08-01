@@ -137,12 +137,36 @@ export const parseJsonObject = async (request: Request) => {
   }
 
   try {
-    const body: unknown = await request.json();
+    if (!request.body) throw new Error("Missing body");
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      receivedBytes += value.byteLength;
+      if (receivedBytes > 100_000) {
+        await reader.cancel();
+        throw new HttpError(413, "Request is too large");
+      }
+      chunks.push(value);
+    }
+
+    const bytes = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+
+    const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       throw new Error("Expected an object");
     }
     return body as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
     throw new HttpError(400, "Invalid JSON request");
   }
 };

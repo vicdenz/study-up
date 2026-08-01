@@ -8,6 +8,7 @@ import {
   parseJsonObject,
   requireUserClient,
 } from "../_shared/http.ts";
+import { createGeminiRequest } from "../_shared/gemini.ts";
 
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.6-flash";
 
@@ -144,19 +145,14 @@ Use 30–120 minute sessions, schedule all sessions before the due date, and ret
     await enforceAiQuota(supabase, "generate-study-plan");
 
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: 4_096,
-            responseMimeType: "application/json",
-          },
-        }),
-        signal: AbortSignal.timeout(30_000),
-      },
+      createGeminiRequest(GEMINI_MODEL, geminiApiKey, {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 4_096,
+          responseMimeType: "application/json",
+        },
+      }),
+      { signal: AbortSignal.timeout(30_000) },
     );
 
     if (!geminiResponse.ok) {
