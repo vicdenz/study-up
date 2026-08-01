@@ -21,4 +21,13 @@ describe("browser branding", () => {
   test("does not retain the legacy Lovable favicon fallback", () => {
     expect(existsSync("public/favicon.ico")).toBe(false);
   });
+
+  test("uses a product-owned landing-page screenshot path", () => {
+    const landingPage = readFileSync("src/pages/LandingPage.tsx", "utf8");
+
+    expect(landingPage).toContain('src="/studyup-dashboard.png"');
+    expect(landingPage.toLowerCase()).not.toContain("lovable");
+    expect(existsSync("public/studyup-dashboard.png")).toBe(true);
+    expect(existsSync("public/lovable-uploads")).toBe(false);
+  });
 });

@@ -45,7 +45,7 @@ const LandingPage = () => {
         <div className="relative mt-8 md:mt-16 w-full">
           <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-20 blur-2xl"></div>
           <img 
-            src="/lovable-uploads/8321a47f-6fa8-4086-870a-1b76b48edcb3.png" 
+            src="/studyup-dashboard.png"
             alt="StudyUp application screenshot" 
             className="relative rounded-lg shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
           />
