@@ -19,6 +19,7 @@ const Notebook = lazy(() => import("./pages/Notebook"));
 const NoteEditor = lazy(() => import("./pages/NoteEditor"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Planner = lazy(() => import("./pages/Planner"));
+const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
 const Upload = lazy(() => import("./pages/Upload"));
 
 const queryClient = new QueryClient({
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/planner"><Planner /></Route>
             <Route path="/upload"><Upload /></Route>
             <Route path="/ai-tutor"><AITutor /></Route>
+            <Route path="/settings"><ProfileSettings /></Route>
             <Route><NotFound /></Route>
           </Switch>
         </Suspense>

@@ -99,7 +99,7 @@ const Notebook = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="app-background min-h-screen flex">
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="flex items-center space-x-2">
@@ -112,12 +112,12 @@ const Notebook = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       
-      <main className="flex-1">
+      <main className="min-w-0 flex-1">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900">Knowledge Notebook</h1>
             <div className="flex items-center space-x-4">

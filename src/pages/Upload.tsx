@@ -200,10 +200,10 @@ const Upload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <header className="sticky top-0 z-20 flex-shrink-0 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900">Upload Materials</h1>
             <UserMenu />

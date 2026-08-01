@@ -141,10 +141,10 @@ const Planner = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex font-sans overflow-hidden">
+    <div className="app-background h-screen flex font-sans overflow-hidden">
       <Navigation />
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <header className="z-20 flex-shrink-0 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900">Planner</h1>
             <UserMenu />

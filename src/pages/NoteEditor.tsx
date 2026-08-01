@@ -2,6 +2,7 @@
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "@/lib/router";
 import { Button } from "@/components/ui/button";
+import Brand from "@/components/Brand";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -139,11 +140,12 @@ const NoteEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="app-background min-h-screen">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
+      <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
+            <Brand compact className="mr-1" />
             <Button
               variant="ghost"
               onClick={() => navigate("/notebook")}
