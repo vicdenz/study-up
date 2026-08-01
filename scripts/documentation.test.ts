@@ -3,8 +3,7 @@ import { readFileSync } from "node:fs";
 
 const documentedSecretGuides = [
   "README.md",
-  "docs/SECRETS_AND_E2E.md",
-  "docs/VERCEL_MIGRATION.md",
+  "docs/SECURITY.md",
 ];
 const canonicalGeminiCommand =
   'read -s "k?Gemini API key: "; echo; pnpm exec supabase secrets set "GEMINI_API_KEY=$k"; unset k';
@@ -27,7 +26,7 @@ describe("Gemini secret documentation", () => {
   );
 
   test("the operational secret guide explains both observed failure modes", () => {
-    const guide = readFileSync("docs/SECRETS_AND_E2E.md", "utf8");
+    const guide = readFileSync("docs/SECURITY.md", "utf8");
 
     expect(guide).toContain("actual newline before `GEMINI_API_KEY`");
     expect(guide).toContain("`502 Bad Gateway`");
