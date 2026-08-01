@@ -18,6 +18,12 @@ const stagingWorkflow = readFileSync(
   ".github/workflows/staging-gate.yml",
   "utf8",
 );
+const workflowFiles = readdirSync(".github/workflows")
+  .filter((name) => /\.ya?ml$/.test(name))
+  .map((name) => ({
+    name,
+    text: readFileSync(`.github/workflows/${name}`, "utf8"),
+  }));
 const vercelIgnore = readFileSync(".vercelignore", "utf8")
   .split(/\r?\n/)
   .map((line) => line.trim())
@@ -132,6 +138,27 @@ if (
   !qualityWorkflow.includes("github.event.deployment_status.state")
 ) {
   fail("Push and deployment quality runs must use isolated concurrency groups.");
+}
+for (const workflow of workflowFiles) {
+  for (const match of workflow.text.matchAll(/\buses:\s*([^\s#]+)/g)) {
+    const action = match[1];
+    if (!/@[0-9a-f]{40}$/.test(action)) {
+      fail(
+        `.github/workflows/${workflow.name} must pin ${action} to a full commit SHA.`,
+      );
+    }
+  }
+
+  const checkoutCount = [...workflow.text.matchAll(/actions\/checkout@[0-9a-f]{40}/g)]
+    .length;
+  const hardenedCheckoutCount = [
+    ...workflow.text.matchAll(/actions\/checkout@[0-9a-f]{40}[\s\S]{0,160}?persist-credentials:\s*false/g),
+  ].length;
+  if (checkoutCount !== hardenedCheckoutCount) {
+    fail(
+      `.github/workflows/${workflow.name} must disable persisted checkout credentials.`,
+    );
+  }
 }
 if (
   !/^\s{6}- staging\s*$/m.test(stagingWorkflow) ||
