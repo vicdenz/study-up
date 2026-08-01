@@ -1,0 +1,181 @@
+import {
+  createClient,
+  type SupabaseClient,
+} from "npm:@supabase/supabase-js@2.111.0";
+
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+const allowedOrigins = () =>
+  (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const allowedOriginPatterns = () =>
+  (Deno.env.get("ALLOWED_ORIGIN_PATTERNS") ?? "")
+    .split(",")
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
+
+const matchesOriginPattern = (origin: string, pattern: string) => {
+  // Origin patterns deliberately support only HTTPS hostnames and a wildcard
+  // within a hostname label. Paths, credentials, query strings, and broad
+  // scheme wildcards are rejected.
+  if (
+    !/^https:\/\/[a-z0-9*.-]+(?::\d+)?$/i.test(pattern) ||
+    !pattern.includes("*")
+  ) {
+    return false;
+  }
+
+  const expression = escapeRegExp(pattern).replaceAll("*", "[a-z0-9-]+");
+  return new RegExp(`^${expression}$`, "i").test(origin);
+};
+
+const isAllowedOrigin = (origin: string) =>
+  allowedOrigins().includes(origin) ||
+  allowedOriginPatterns().some((pattern) =>
+    matchesOriginPattern(origin, pattern)
+  );
+
+export const corsHeaders = (request: Request) => {
+  const origin = request.headers.get("origin");
+  const allowedOrigin = origin && isAllowedOrigin(origin) ? origin : "null";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+};
+
+export const jsonResponse = (
+  request: Request,
+  body: unknown,
+  status = 200,
+) =>
+  Response.json(body, {
+    status,
+    headers: corsHeaders(request),
+  });
+
+export const requireUserClient = async (request: Request) => {
+  const authorization = request.headers.get("authorization");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ??
+    Deno.env.get("SUPABASE_ANON_KEY");
+
+  if (
+    !authorization?.startsWith("Bearer ") || !supabaseUrl || !publishableKey
+  ) {
+    throw new HttpError(401, "Authentication required");
+  }
+
+  const supabase = createClient(supabaseUrl, publishableKey, {
+    global: { headers: { Authorization: authorization } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new HttpError(401, "Authentication required");
+  }
+
+  return { supabase, user, supabaseUrl };
+};
+
+export const enforceAiQuota = async (
+  supabase: SupabaseClient,
+  functionName: "chat-with-gemini" | "generate-study-plan",
+) => {
+  const { data, error } = await supabase
+    .rpc("consume_ai_quota", { p_function_name: functionName })
+    .single();
+  const quota = data as {
+    allowed?: boolean;
+    remaining?: number;
+    reset_at?: string;
+  } | null;
+
+  if (error || !quota || typeof quota.allowed !== "boolean") {
+    console.error("Could not enforce AI quota", error);
+    throw new HttpError(503, "AI usage limits are temporarily unavailable");
+  }
+  if (!quota.allowed) {
+    throw new HttpError(
+      429,
+      `AI request limit reached. Try again after ${
+        quota.reset_at ?? "the current usage window"
+      }`,
+    );
+  }
+
+  return quota;
+};
+
+export const parseJsonObject = async (request: Request) => {
+  if (request.method !== "POST") {
+    throw new HttpError(405, "Method not allowed");
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > 100_000) {
+    throw new HttpError(413, "Request is too large");
+  }
+
+  try {
+    if (!request.body) throw new Error("Missing body");
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      receivedBytes += value.byteLength;
+      if (receivedBytes > 100_000) {
+        await reader.cancel();
+        throw new HttpError(413, "Request is too large");
+      }
+      chunks.push(value);
+    }
+
+    const bytes = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+
+    const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      throw new Error("Expected an object");
+    }
+    return body as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(400, "Invalid JSON request");
+  }
+};
+
+export const handleError = (request: Request, error: unknown) => {
+  if (error instanceof HttpError) {
+    return jsonResponse(request, { error: error.message }, error.status);
+  }
+
+  console.error("Unhandled Edge Function error", error);
+  return jsonResponse(request, { error: "An unexpected error occurred" }, 500);
+};

@@ -1,97 +1,58 @@
 <div align="center">
-  <img alt="Logo" src="studyup-logo.svg" width="100" />
-  <h1><strong>StudyUp</strong></h1>
-  <p>All-in-one AI-powered academic workspace that organizes your semester generates personalized study plans using full context.</p>
+  <img alt="StudyUp brain logo" src="public/studyup-logo.svg" width="100" />
+  <h1>StudyUp</h1>
+  <p>Your courses, materials, plans, and AI tutor in one place.</p>
 </div>
 
----
+StudyUp is an AI-powered learning companion built for university students. It
+turns scattered notes, PDFs, assignments, and study plans into one organized
+workspace with support grounded in each student's own course material.
 
-https://github.com/user-attachments/assets/6e5bc6b9-fa0c-423a-b1d9-c652b3b69478
+![StudyUp dashboard](public/studyup-dashboard.png)
 
-## 🚀 How It Works
+## What you can do
 
-1. **Organize**: Create and manage courses, assignments, notes, and materials
-2. **Study**: Generate AI-powered study plans and summaries tailored to your needs
-3. **Track**: Monitor progress and past activity with a built-in dashboard
-4. **Summarize**: Use the AI tutor to condense lengthy notes into key points
-5. **Upload**: Securely upload and manage course materials
+- Organize courses, assignments, notes, and uploaded materials
+- Track deadlines, progress, and study sessions
+- Build study plans around upcoming assignments
+- Ask an AI tutor questions using relevant course context
+- Generate concise summaries from your notes
+- Keep each account's academic data and files private
 
----
+## Why StudyUp
 
-## 🔧 Features
+Students often study across disconnected tools: course portals, cloud drives,
+calendars, notebooks, and generic AI chats. StudyUp brings that work together so
+students spend less time organizing and more time learning.
 
-- 📚 Course & assignment management with autosave notes
-- 🤖 AI Tutor powered by Gemini via Supabase Edge Functions
-- 📊 Visual analytics using Recharts and date-fns
-- 📁 File uploads secured with Supabase Storage policies
-- 🔒 Auth via Supabase with RLS and user-specific data access
-- 📝 Smart note editor with tagging and AI-generated summaries
-- 📆 Study session tracking and activity logging
-- 🧠 Gemini-based chat + study-plan generation (via Deno Edge Functions)
+## Run it locally
 
----
-
-## 🛠️ Architecture
-
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Router
-- **State & Forms**: React Query, React Hook Form, Zod
-- **Backend**: Supabase PostgreSQL with migrations & RLS policies
-- **Functions**: Supabase Edge Functions for chat and AI plan generation
-- **Libraries**: Recharts, Sonner, Embla, Lucide, pdfjs-dist, clsx, class-variance-authority
-
----
-
-## ⚡ Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- Supabase project
-- Gemini API key
-
-### Setup
+Use Node 22 and pnpm 10.34.5:
 
 ```bash
-npm install
+pnpm install --frozen-lockfile
+cp .env.example .env.local
+pnpm dev
 ```
 
-Create a .env file with:
+Add your Supabase URL and publishable key to `.env.local`. Detailed setup,
+testing, security, and deployment instructions are in [`docs`](docs/).
 
-```bash
-VITE_SUPABASE_URL=<your-supabase-url>
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
-GEMINI_API_KEY=<your-gemini-key>
-```
+## License
 
-Start the development server:
+StudyUp is available under the [MIT License](LICENSE).
 
-```bash
-npm run dev
-```
+## Hackathon
 
-Visit: http://localhost:8080 
+StudyUp won the **Lovable x Roam International Hackathon**, hosted by UTMIST.
 
-Supabase Setup
-1. Run all SQL files in supabase/migrations/ to initialize the database schema
-2. Deploy edge functions in supabase/functions/ using the Supabase CLI:
+Our team found the idea at the Myhal Centre for Engineering Innovation and
+Entrepreneurship by reflecting on our own late nights and fragmented study
+workflows. With less than four hours remaining, we committed to building a
+single place where students could organize their academic life and receive
+personalized help from Gemini.
 
-```bash
-supabase functions deploy chat-with-gemini
-supabase functions deploy generate-study-plan
-```
-
-#### Deployed @ [https://study-up.lovable.app/)
-
-## 🌐 Browser Compatibility
-
-Supported on:
-- Chrome 90+  
-- Firefox 88+  
-- Safari 14+  
-- Edge 90+
-
----
-
-## 📄 License
-
-MIT License
+We built and pitched StudyUp to a panel of industry judges, winning the overall
+hackathon. The experience reinforced what the project represents: practical
+technology, built under pressure, focused on helping people solve a real
+everyday problem.

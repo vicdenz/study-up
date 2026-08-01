@@ -11,7 +11,7 @@ import {
 import { User, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router";
 
 const UserMenu = () => {
   const [loading, setLoading] = useState(false);
@@ -37,16 +37,21 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 rounded-full"
+          aria-label="Open user menu"
+        >
           <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => toast.info("Profile management is coming soon")}>
           <User className="h-4 w-4 mr-2" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => toast.info("Settings are coming soon")}>
           <Settings className="h-4 w-4 mr-2" />
           Settings
         </DropdownMenuItem>

@@ -1,0 +1,41 @@
+{
+  "$schema": "./environment.schema.json",
+  "name": "staging",
+  "git": {
+    "repository": "vicdenz/study-up",
+    "branch": "staging",
+    "productionBranch": "main",
+    "requiredChecks": [],
+    "directPushesAllowed": true,
+    "forcePushesAllowed": false,
+    "deletionAllowed": false
+  },
+  "github": {
+    "environment": "staging",
+    "branchPolicy": "selected",
+    "requiredPullRequestApprovals": 0,
+    "dismissStaleReviews": false,
+    "requireConversationResolution": false
+  },
+  "vercel": {
+    "project": "study-up",
+    "target": "preview",
+    "branchAlias": "https://study-up-git-staging-david-daniliucs-projects.vercel.app",
+    "customEnvironment": false
+  },
+  "supabase": {
+    "strategy": "persistent-branch",
+    "projectRef": "hzkwaecgggkjikwlvghi",
+    "branch": "staging",
+    "withProductionData": true,
+    "resetOnProductionMerge": true,
+    "requiresPlan": "pro",
+    "allowedOrigins": [
+      "https://study-up-pi.vercel.app",
+      "https://study-up-git-staging-david-daniliucs-projects.vercel.app"
+    ],
+    "allowedOriginPatterns": [
+      "https://study-*-david-daniliucs-projects.vercel.app"
+    ]
+  }
+}

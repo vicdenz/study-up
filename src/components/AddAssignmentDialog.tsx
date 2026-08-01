@@ -8,14 +8,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAllAssignments } from '@/hooks/useAssignments';
 import { useCourses } from '@/hooks/useCourses';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
 
 interface AddAssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialDueDate?: Date;
+  initialCourseId?: string;
 }
 
-const AddAssignmentDialog = ({ open, onOpenChange, initialDueDate }: AddAssignmentDialogProps) => {
+const AddAssignmentDialog = ({
+  open,
+  onOpenChange,
+  initialDueDate,
+  initialCourseId,
+}: AddAssignmentDialogProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -29,26 +36,30 @@ const AddAssignmentDialog = ({ open, onOpenChange, initialDueDate }: AddAssignme
   // Set initial due date when dialog opens, preserving HH:mm and date
   useEffect(() => {
     if (open && initialDueDate) {
-      const isoString = initialDueDate.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+      const isoString = format(initialDueDate, "yyyy-MM-dd'T'HH:mm");
       setFormData(prev => ({ ...prev, due_date: isoString }));
     }
     // If no initialDueDate (slot), clear due_date
     if (open && !initialDueDate) {
       setFormData(prev => ({ ...prev, due_date: '' }));
     }
-    // eslint-disable-next-line
-  }, [open, initialDueDate]);
+    if (open && initialCourseId) {
+      setFormData(prev => ({ ...prev, course_id: initialCourseId }));
+    }
+  }, [open, initialDueDate, initialCourseId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim() || !formData.course_id) return;
 
     try {
       await createAssignment({
         title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        due_date: formData.due_date || undefined,
-        course_id: formData.course_id || undefined
+        description: formData.description.trim() || null,
+        due_date: formData.due_date
+          ? new Date(formData.due_date).toISOString()
+          : null,
+        course_id: formData.course_id,
       });
 
       // Reset form and close dialog
@@ -83,7 +94,7 @@ const AddAssignmentDialog = ({ open, onOpenChange, initialDueDate }: AddAssignme
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="course">Course (Optional)</Label>
+            <Label htmlFor="course">Course</Label>
             <Select
               value={formData.course_id}
               onValueChange={(value) => setFormData({ ...formData, course_id: value })}
@@ -126,7 +137,10 @@ const AddAssignmentDialog = ({ open, onOpenChange, initialDueDate }: AddAssignme
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating || !formData.title.trim()}>
+            <Button
+              type="submit"
+              disabled={isCreating || !formData.title.trim() || !formData.course_id}
+            >
               {isCreating ? 'Creating...' : 'Create Assignment'}
             </Button>
           </div>

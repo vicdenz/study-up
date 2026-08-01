@@ -1,0 +1,76 @@
+name: Deploy Vercel
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment environment
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require main for production deployments
+        env:
+          DEPLOY_TARGET: ${{ inputs.target }}
+          SOURCE_REF: ${{ github.ref }}
+        run: |
+          if [ "$DEPLOY_TARGET" = production ] && [ "$SOURCE_REF" != refs/heads/main ]; then
+            echo "Production deployments must run from refs/heads/main." >&2
+            exit 1
+          fi
+
+  deploy:
+    needs: validate-target
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+
+      - name: Pull Preview configuration
+        if: inputs.target == 'preview'
+        run: pnpm dlx vercel@58.4.0 pull --yes --environment=preview --token="$VERCEL_TOKEN"
+      - name: Pull Production configuration
+        if: inputs.target == 'production'
+        run: pnpm dlx vercel@58.4.0 pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build Preview artifact
+        if: inputs.target == 'preview'
+        run: pnpm dlx vercel@58.4.0 build --token="$VERCEL_TOKEN"
+      - name: Build Production artifact
+        if: inputs.target == 'production'
+        run: pnpm dlx vercel@58.4.0 build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy Preview artifact
+        if: inputs.target == 'preview'
+        run: pnpm dlx vercel@58.4.0 deploy --prebuilt --token="$VERCEL_TOKEN"
+      - name: Deploy Production artifact
+        if: inputs.target == 'production'
+        run: pnpm dlx vercel@58.4.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"

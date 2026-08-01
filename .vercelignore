@@ -1,0 +1,13 @@
+.git
+.github
+.openai
+.auth
+.env*
+.supabase
+docs
+e2e
+playwright-report
+scripts
+/supabase
+test-results
+*.log

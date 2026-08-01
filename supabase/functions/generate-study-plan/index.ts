@@ -1,139 +1,200 @@
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import {
+  corsHeaders,
+  enforceAiQuota,
+  handleError,
+  HttpError,
+  jsonResponse,
+  parseJsonObject,
+  requireUserClient,
+} from "../_shared/http.ts";
+import { createGeminiRequest } from "../_shared/gemini.ts";
 
-import 'https://deno.land/x/xhr@0.1.0/mod.ts'
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { stripIndent } from 'https://esm.sh/common-tags@1.8.2'
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.6-flash";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface StudyPlanSession {
+  title: string;
+  description: string;
+  scheduled_date: string;
+  duration: number;
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+interface StudyPlan {
+  rationale: string;
+  sessions: StudyPlanSession[];
+}
+
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> };
+  }>;
+}
+
+const isStudyPlan = (value: unknown): value is StudyPlan => {
+  if (!value || typeof value !== "object") return false;
+  const plan = value as Record<string, unknown>;
+  if (typeof plan.rationale !== "string" || !Array.isArray(plan.sessions)) {
+    return false;
+  }
+  if (plan.sessions.length === 0 || plan.sessions.length > 30) return false;
+
+  return plan.sessions.every((session) => {
+    if (!session || typeof session !== "object") return false;
+    const candidate = session as Record<string, unknown>;
+    return (
+      typeof candidate.title === "string" &&
+      candidate.title.length > 0 &&
+      typeof candidate.description === "string" &&
+      typeof candidate.scheduled_date === "string" &&
+      !Number.isNaN(Date.parse(candidate.scheduled_date)) &&
+      typeof candidate.duration === "number" &&
+      Number.isInteger(candidate.duration) &&
+      candidate.duration >= 30 &&
+      candidate.duration <= 120
+    );
+  });
+};
+
+serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
 
   try {
-    const { assignmentId } = await req.json()
-    if (!assignmentId) {
-      throw new Error('assignmentId is required')
+    const { supabase } = await requireUserClient(request);
+    const body = await parseJsonObject(request);
+    const assignmentId = typeof body.assignmentId === "string"
+      ? body.assignmentId.trim()
+      : "";
+
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        .test(assignmentId)
+    ) {
+      throw new HttpError(400, "A valid assignmentId is required");
     }
-    
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
 
-    const { data: assignment, error: assignmentError } = await supabaseAdmin
-      .from('assignments')
-      .select('title, description, due_date, course_id')
-      .eq('id', assignmentId)
-      .single()
+    // This user-scoped client enforces the assignment and material RLS policies.
+    const { data: assignment, error: assignmentError } = await supabase
+      .from("assignments")
+      .select("title, description, due_date, course_id")
+      .eq("id", assignmentId)
+      .single();
 
-    if (assignmentError) throw assignmentError
-    if (!assignment) throw new Error('Assignment not found')
-
-    const { data: materials, error: materialsError } = await supabaseAdmin
-      .from('assignment_materials')
-      .select('title, content')
-      .eq('assignment_id', assignmentId)
-      .limit(5)
-
-    if (materialsError) throw materialsError
-
-    const materialsContext = materials && materials.length > 0
-      ? materials.map(m => `Material: ${m.title}\nContent: ${m.content ? m.content.substring(0, 2000) : 'No text content available'}`).join('\n\n')
-      : 'No materials provided.'
-
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!geminiApiKey) {
-      throw new Error('Gemini API key not configured')
+    if (assignmentError || !assignment) {
+      throw new HttpError(404, "Assignment not found");
     }
-    
-    const currentDate = new Date().toISOString();
-    const dueDate = new Date(assignment.due_date!).toISOString();
+    if (!assignment.due_date) {
+      throw new HttpError(400, "The assignment needs a due date");
+    }
 
-    const prompt = stripIndent`
-      You are an expert academic planner. Your task is to create a realistic and effective study plan for a student.
+    const dueDate = new Date(assignment.due_date);
+    if (dueDate.getTime() <= Date.now()) {
+      throw new HttpError(400, "The assignment due date must be in the future");
+    }
 
-      Assignment Details:
-      - Title: ${assignment.title}
-      - Description: ${assignment.description || 'No description provided.'}
-      - Due Date: ${dueDate}
-      - Current Date: ${currentDate}
+    const { data: materials, error: materialsError } = await supabase
+      .from("assignment_materials")
+      .select("title, content")
+      .eq("assignment_id", assignmentId)
+      .limit(5);
 
-      Available Study Materials:
-      ${materialsContext}
+    if (materialsError) {
+      throw new HttpError(500, "Could not load assignment materials");
+    }
 
-      Instructions:
-      1. Analyze the assignment details, materials, and timeline.
-      2. Create a series of study sessions. Break down the assignment into manageable tasks.
-      3. For each session, provide a title, a brief description of the task, a scheduled date and time (in ISO 8601 format), and a duration in minutes.
-      4. Schedule sessions reasonably between the current date and the due date. Avoid scheduling sessions on the due date itself. Spread them out. Prefer scheduling during typical study hours (e.g., afternoon, early evening). A session can be between 30 and 120 minutes.
-      5. Provide a clear "rationale" explaining your thought process for the plan. Explain why you structured the sessions this way, referencing the materials and the timeline.
-      6. Your entire response MUST be a single, valid JSON object. Do not include any text outside of the JSON structure.
+    const materialsContext = materials?.length
+      ? materials
+        .map((material) =>
+          `Material: ${material.title}\nContent: ${
+            material.content?.slice(0, 2_000) ?? "No text content available"
+          }`
+        )
+        .join("\n\n")
+      : "No materials provided.";
 
-      JSON Output Format:
-      {
-        "rationale": "A string explaining the study plan.",
-        "sessions": [
-          {
-            "title": "Session Title",
-            "description": "What to do in this session.",
-            "scheduled_date": "YYYY-MM-DDTHH:MM:SS.sssZ",
-            "duration": 60
-          }
-        ]
-      }
-    `
-    
-    const requestBody = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.5,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4096,
-        response_mime_type: "application/json",
-      }
-    };
-    
+    const prompt =
+      `You are an expert academic planner. Create a realistic study plan.
+
+Assignment:
+- Title: ${assignment.title}
+- Description: ${assignment.description ?? "No description provided"}
+- Due date: ${dueDate.toISOString()}
+- Current date: ${new Date().toISOString()}
+
+Materials:
+${materialsContext}
+
+Return only JSON with this shape:
+{
+  "rationale": "brief explanation",
+  "sessions": [
+    {
+      "title": "session title",
+      "description": "specific work",
+      "scheduled_date": "ISO 8601 timestamp before the due date",
+      "duration": 60
+    }
+  ]
+}
+
+Use 30–120 minute sessions, schedule all sessions before the due date, and return no more than 30 sessions.`;
+
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not configured");
+    await enforceAiQuota(supabase, "generate-study-plan");
+
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      }
+      createGeminiRequest(GEMINI_MODEL, geminiApiKey, {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 4_096,
+          responseMimeType: "application/json",
+        },
+      }),
+      { signal: AbortSignal.timeout(30_000) },
     );
 
     if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error('Failed to generate response from Gemini');
+      console.error("Gemini API error", geminiResponse.status);
+      throw new HttpError(
+        502,
+        "The AI provider could not generate a study plan",
+      );
     }
 
-    const data = await geminiResponse.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      console.error('Invalid response from Gemini:', JSON.stringify(data, null, 2));
-      const reason = data?.promptFeedback?.blockReason || 'unknown reason';
-      throw new Error(`AI model blocked the response. Reason: ${reason}`);
+    const data = await geminiResponse.json() as GeminiResponse;
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!generatedText) {
+      throw new HttpError(422, "The AI provider returned an empty plan");
     }
 
-    const generatedText = data.candidates[0].content.parts[0].text;
-    const plan = JSON.parse(generatedText);
+    let plan: unknown;
+    try {
+      plan = JSON.parse(generatedText);
+    } catch {
+      throw new HttpError(502, "The AI provider returned invalid JSON");
+    }
 
-    return new Response(JSON.stringify(plan), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    if (!isStudyPlan(plan)) {
+      throw new HttpError(
+        502,
+        "The AI provider returned an invalid study plan",
+      );
+    }
+    if (
+      plan.sessions.some((session) =>
+        new Date(session.scheduled_date) >= dueDate
+      )
+    ) {
+      throw new HttpError(
+        502,
+        "The AI provider scheduled a session after the due date",
+      );
+    }
 
+    return jsonResponse(request, plan);
   } catch (error) {
-    console.error('Error in generate-study-plan function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return handleError(request, error);
   }
-})
+});

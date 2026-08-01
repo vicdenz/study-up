@@ -7,7 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Plus, Upload, Loader2 } from 'lucide-react';
 
 interface AddMaterialDialogProps {
-  onAddMaterial: (data: { title: string; type: string; file: File }) => void;
+  onAddMaterial: (data: {
+    title: string;
+    type: string;
+    file: File;
+  }) => Promise<unknown>;
   isUploading: boolean;
 }
 
@@ -16,20 +20,22 @@ const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({ onAddMaterial, is
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !title.trim()) return;
 
-    onAddMaterial({
-      title: title.trim(),
-      type: file.type,
-      file: file
-    });
-
-    // Close dialog and reset form
-    setOpen(false);
-    setTitle('');
-    setFile(null);
+    try {
+      await onAddMaterial({
+        title: title.trim(),
+        type: file.type,
+        file: file
+      });
+      setOpen(false);
+      setTitle('');
+      setFile(null);
+    } catch {
+      // The mutation toast reports the error and the form remains available.
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
-type StudySession = Database['public']['Tables']['study_sessions']['Row'];
+export type StudySession = Database['public']['Tables']['study_sessions']['Row'];
 type StudySessionInsert = Database['public']['Tables']['study_sessions']['Insert'];
 type StudySessionUpdate = Database['public']['Tables']['study_sessions']['Update'];
 type Course = Database['public']['Tables']['courses']['Row'];

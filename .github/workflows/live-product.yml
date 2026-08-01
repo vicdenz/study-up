@@ -1,0 +1,47 @@
+name: Live product verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: Vercel preview or production URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify authenticated CRUD and Gemini
+        run: pnpm test:e2e:live:ci
+        env:
+          E2E_BASE_URL: ${{ inputs.deployment_url }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_SECONDARY_EMAIL: ${{ secrets.E2E_SECONDARY_EMAIL }}
+          E2E_SECONDARY_PASSWORD: ${{ secrets.E2E_SECONDARY_PASSWORD }}
+          E2E_ALLOWED_ORIGINS: ${{ vars.E2E_ALLOWED_ORIGINS }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - name: Upload Playwright reports and failure evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: live-playwright-report
+          path: artifacts/playwright/
+          if-no-files-found: error
+          retention-days: 14

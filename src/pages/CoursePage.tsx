@@ -1,7 +1,7 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "@/lib/router";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar, FileText, Brain, ArrowLeft, Plus, Loader2, Download, Eye, Trash2, Edit, Check, X } from "lucide-react";
+import { BookOpen, Calendar, FileText, Brain, ArrowLeft, Plus, Loader2, Download, Eye, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   AlertDialog, 
@@ -18,11 +18,15 @@ import Navigation from "@/components/Navigation";
 import UserMenu from "@/components/UserMenu";
 import { useCourses } from "@/hooks/useCourses";
 import { useAssignments } from "@/hooks/useAssignments";
+import type { Assignment } from "@/hooks/useAssignments";
+import type { AssignmentUpdate } from "@/hooks/useAssignments";
 import { useCourseMaterials } from "@/hooks/useCourseMaterials";
 import AddAssignmentDialog from "@/components/AddAssignmentDialog";
 import AddMaterialDialog from "@/components/AddMaterialDialog";
 import EditAssignmentDialog from "@/components/EditAssignmentDialog";
 import { useState } from "react";
+import { downloadFile } from "@/lib/download-file";
+import { toast } from "sonner";
 
 const CoursePage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -33,12 +37,9 @@ const CoursePage = () => {
   const { 
     assignments, 
     isLoading: assignmentsLoading, 
-    createAssignment, 
-    isCreating,
     updateAssignment,
     isUpdating,
     deleteAssignment,
-    isDeleting,
     toggleAssignmentCompletion,
     isTogglingCompletion
   } = useAssignments(courseId || '');
@@ -51,36 +52,15 @@ const CoursePage = () => {
   const totalAssignments = assignments?.length || 0;
   const calculatedProgress = totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0;
 
-  const handleAddAssignment = (assignmentData: {
-    title: string;
-    description?: string;
-    due_date?: string;
-  }) => {
-    if (courseId) {
-      createAssignment({
-        ...assignmentData,
-        course_id: courseId
-      });
-    }
-  };
-
-  const handleUpdateAssignment = (updates: {
-    id: string;
-    updates: {
-      title: string;
-      description?: string;
-      due_date?: string;
-    };
-  }) => {
+  const handleUpdateAssignment = (updates: { id: string; updates: AssignmentUpdate }) =>
     updateAssignment(updates);
+
+  const handleDeleteAssignment = (assignment: Assignment) => {
+    void deleteAssignment(assignment);
   };
 
-  const handleDeleteAssignment = (assignment: any) => {
-    deleteAssignment(assignment);
-  };
-
-  const handleToggleCompletion = (assignment: any) => {
-    toggleAssignmentCompletion(assignment);
+  const handleToggleCompletion = (assignment: Assignment) => {
+    void toggleAssignmentCompletion(assignment);
   };
 
   const handleAddMaterial = (materialData: {
@@ -89,11 +69,12 @@ const CoursePage = () => {
     file: File;
   }) => {
     if (courseId) {
-      uploadMaterial({
+      return uploadMaterial({
         ...materialData,
         course_id: courseId
       });
     }
+    return Promise.reject(new Error("A course is required before uploading"));
   };
 
   const handleAskAI = () => {
@@ -285,6 +266,7 @@ const CoursePage = () => {
                             <Button asChild variant="ghost" size="sm">
                               <Link to={`/courses/${courseId}/assignments/${assignment.id}`}>
                                 <Eye className="h-4 w-4" />
+                                <span className="sr-only">View {assignment.title}</span>
                               </Link>
                             </Button>
                             <EditAssignmentDialog
@@ -294,7 +276,11 @@ const CoursePage = () => {
                             />
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label={`Delete ${assignment.title}`}
+                                >
                                   <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -362,18 +348,23 @@ const CoursePage = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => window.open(material.url || '', '_blank')}
+                            disabled={!material.url}
+                            aria-label={`View ${material.title}`}
+                            onClick={() => material.url && window.open(material.url, '_blank', 'noopener,noreferrer')}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
+                            disabled={!material.url}
+                            aria-label={`Download ${material.title}`}
                             onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = material.url || '';
-                              link.download = material.title;
-                              link.click();
+                              if (!material.url) return;
+                              void downloadFile(material.url, material.title).catch((error) => {
+                                console.error("Material download failed:", error);
+                                toast.error("Failed to download material");
+                              });
                             }}
                           >
                             <Download className="h-4 w-4" />
@@ -381,6 +372,7 @@ const CoursePage = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
+                            aria-label={`Delete ${material.title}`}
                             onClick={() => deleteMaterial(material)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -405,6 +397,7 @@ const CoursePage = () => {
       <AddAssignmentDialog 
         open={showAddAssignmentDialog} 
         onOpenChange={setShowAddAssignmentDialog}
+        initialCourseId={courseId}
       />
     </div>
   );

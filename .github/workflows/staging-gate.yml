@@ -1,0 +1,35 @@
+name: Staging environment gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: read
+  deployments: read
+
+concurrency:
+  group: staging-environment
+  cancel-in-progress: true
+
+jobs:
+  protected-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: staging
+      url: https://study-up-git-staging-david-daniliucs-projects.vercel.app
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify staging infrastructure declaration
+        run: pnpm infra:verify

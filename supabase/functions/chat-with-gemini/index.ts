@@ -1,146 +1,196 @@
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import {
+  corsHeaders,
+  enforceAiQuota,
+  handleError,
+  HttpError,
+  jsonResponse,
+  parseJsonObject,
+  requireUserClient,
+} from "../_shared/http.ts";
+import { createGeminiRequest } from "../_shared/gemini.ts";
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+const MAX_MESSAGE_LENGTH = 8_000;
+const MAX_CONTEXT_LENGTH = 50_000;
+const MAX_IMAGES = 4;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.6-flash";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface GeminiPart {
+  text?: string;
+  inline_data?: {
+    mime_type: string;
+    data: string;
+  };
+}
+
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> };
+  }>;
+  promptFeedback?: { blockReason?: string };
+}
+
+const bytesToBase64 = (bytes: Uint8Array) => {
+  let binary = "";
+  const chunkSize = 32_768;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(offset, offset + chunkSize),
+    );
+  }
+  return btoa(binary);
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+const readLimitedBody = async (response: Response) => {
+  if (!response.body) throw new HttpError(400, "Image response was empty");
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > MAX_IMAGE_BYTES) {
+      await reader.cancel();
+      throw new HttpError(413, "Each image must be 5 MB or smaller");
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+};
+
+const fetchSupabaseImage = async (rawUrl: string, supabaseUrl: string) => {
+  let imageUrl: URL;
+  const projectUrl = new URL(supabaseUrl);
+
+  try {
+    imageUrl = new URL(rawUrl);
+  } catch {
+    throw new HttpError(400, "Invalid image URL");
+  }
+
+  if (
+    imageUrl.protocol !== "https:" ||
+    imageUrl.hostname !== projectUrl.hostname ||
+    !imageUrl.pathname.startsWith("/storage/v1/object/")
+  ) {
+    throw new HttpError(
+      400,
+      "Images must come from this project's Supabase Storage",
+    );
+  }
+
+  const response = await fetch(imageUrl, {
+    redirect: "error",
+    signal: AbortSignal.timeout(10_000),
+  });
+  const contentType = response.headers.get("content-type")?.split(";")[0];
+
+  if (!response.ok || !contentType?.startsWith("image/")) {
+    throw new HttpError(400, "Could not load a valid image");
+  }
+
+  const contentLength = Number(response.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_IMAGE_BYTES) {
+    throw new HttpError(413, "Each image must be 5 MB or smaller");
+  }
+
+  return {
+    contentType,
+    bytes: await readLimitedBody(response),
+  };
+};
+
+serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
 
   try {
-    const { message, context, imageUrls } = await req.json();
-    
-    if (!message) {
-      return new Response(
-        JSON.stringify({ error: 'Message is required' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+    const { supabase, supabaseUrl } = await requireUserClient(request);
+    const body = await parseJsonObject(request);
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const context = typeof body.context === "string" ? body.context.trim() : "";
+    const imageUrls = Array.isArray(body.imageUrls)
+      ? body.imageUrls.filter((url): url is string => typeof url === "string")
+      : [];
+
+    if (!message) throw new HttpError(400, "Message is required");
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      throw new HttpError(
+        400,
+        `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters`,
       );
     }
-
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Gemini API key not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+    if (context.length > MAX_CONTEXT_LENGTH) {
+      throw new HttpError(
+        400,
+        `Context cannot exceed ${MAX_CONTEXT_LENGTH} characters`,
       );
     }
+    if (imageUrls.length > MAX_IMAGES) {
+      throw new HttpError(400, `A maximum of ${MAX_IMAGES} images is allowed`);
+    }
 
-    // Prepare parts for Gemini API
-    const parts: any[] = [{
-      text: context 
-        ? `Context:\n${context}\n\nUser Question: ${message}`
-        : message
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiApiKey) throw new Error("GEMINI_API_KEY is not configured");
+    await enforceAiQuota(supabase, "chat-with-gemini");
+
+    const parts: GeminiPart[] = [{
+      text: context
+        ? `Context:\n${context}\n\nUser question: ${message}`
+        : message,
     }];
 
-    if (imageUrls && Array.isArray(imageUrls)) {
-      for (const url of imageUrls) {
-        try {
-          const imageResponse = await fetch(url);
-          if (!imageResponse.ok) {
-            console.warn(`Failed to fetch image from ${url}, status: ${imageResponse.status}`);
-            continue;
-          }
-          const contentType = imageResponse.headers.get('content-type');
-          if (!contentType || !contentType.startsWith('image/')) {
-            console.warn(`URL ${url} did not return a valid image content-type, but ${contentType}`);
-            continue;
-          }
-
-          const arrayBuffer = await imageResponse.arrayBuffer();
-          const base64data = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-          parts.push({
-            inline_data: {
-              mime_type: contentType,
-              data: base64data
-            }
-          });
-        } catch (e) {
-          console.error(`Error fetching or processing image url ${url}:`, e);
-        }
-      }
-    }
-
-    // Prepare the request to Gemini API
-    const requestBody = {
-      contents: [{ parts }],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      }
-    };
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    for (const imageUrl of imageUrls) {
+      const image = await fetchSupabaseImage(imageUrl, supabaseUrl);
+      parts.push({
+        inline_data: {
+          mime_type: image.contentType,
+          data: bytesToBase64(image.bytes),
         },
-        body: JSON.stringify(requestBody),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate response from Gemini' }),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      });
     }
 
-    const data = await response.json();
-    
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-      console.error('Invalid response from Gemini, possible safety block:', JSON.stringify(data));
-      const reason = data?.promptFeedback?.blockReason || 'unknown reason';
-      return new Response(
-        JSON.stringify({ error: `No response generated. This might be due to safety settings. Reason: ${reason}` }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-type': 'application/json' }
-        }
-      );
-    }
-
-    const generatedText = data.candidates[0].content.parts.map((part: any) => part.text || '').join('');
-
-    return new Response(
-      JSON.stringify({ 
-        response: generatedText,
-        model: 'gemini-1.5-flash-latest'
+    const geminiResponse = await fetch(
+      createGeminiRequest(GEMINI_MODEL, geminiApiKey, {
+        contents: [{ parts }],
+        generationConfig: { maxOutputTokens: 2_048 },
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { signal: AbortSignal.timeout(30_000) },
     );
 
+    if (!geminiResponse.ok) {
+      console.error("Gemini API error", geminiResponse.status);
+      throw new HttpError(502, "The AI provider could not generate a response");
+    }
+
+    const data = await geminiResponse.json() as GeminiResponse;
+    const generatedText = data.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim();
+
+    if (!generatedText) {
+      const reason = data.promptFeedback?.blockReason ?? "safety policy";
+      throw new HttpError(422, `No response was generated (${reason})`);
+    }
+
+    return jsonResponse(request, {
+      response: generatedText,
+      model: GEMINI_MODEL,
+    });
   } catch (error) {
-    console.error('Error in chat-with-gemini function:', error);
-    return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return handleError(request, error);
   }
 });

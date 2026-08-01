@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "git", "github", "vercel", "supabase"],
+  "properties": {
+    "name": { "type": "string", "enum": ["staging", "production"] },
+    "git": {
+      "type": "object",
+      "required": ["repository", "branch", "requiredChecks"]
+    },
+    "github": {
+      "type": "object",
+      "required": ["branchPolicy", "requirePullRequest", "requiredPullRequestApprovals"]
+    },
+    "vercel": {
+      "type": "object",
+      "required": ["project", "target"]
+    },
+    "supabase": {
+      "type": "object",
+      "required": ["projectRef"]
+    }
+  }
+}

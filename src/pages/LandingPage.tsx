@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Brain, ArrowRight, Linkedin, Github, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Brain, X } from "lucide-react";
+import { Link, useNavigate } from "@/lib/router";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -46,7 +45,7 @@ const LandingPage = () => {
         <div className="relative mt-8 md:mt-16 w-full">
           <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-20 blur-2xl"></div>
           <img 
-            src="/lovable-uploads/8321a47f-6fa8-4086-870a-1b76b48edcb3.png" 
+            src="/studyup-dashboard.png"
             alt="StudyUp application screenshot" 
             className="relative rounded-lg shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
           />
@@ -60,14 +59,14 @@ const LandingPage = () => {
             </div>
         </div>
         <div className="flex items-center space-x-4">
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <Linkedin className="h-5 w-5" />
+            <a aria-label="LinkedIn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <span aria-hidden="true" className="font-semibold">in</span>
             </a>
-            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+            <a aria-label="X" href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 <X className="h-5 w-5" />
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <Github className="h-5 w-5" />
+            <a aria-label="GitHub" href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                <span aria-hidden="true" className="font-semibold">GH</span>
             </a>
         </div>
     </footer>

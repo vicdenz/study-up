@@ -6,14 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Database } from '@/integrations/supabase/types';
+import type { AssignmentUpdate } from '@/hooks/useAssignments';
 import { Edit } from 'lucide-react';
+import { format } from 'date-fns';
 
 type Assignment = Database['public']['Tables']['assignments']['Row'];
 
 interface EditAssignmentDialogProps {
   assignment: Assignment;
-  onUpdate?: (data: { id: string; updates: any }) => void;
-  onUpdateAssignment?: (data: { id:string; updates: any }) => void; // Backward compatibility
+  onUpdate?: (data: { id: string; updates: AssignmentUpdate }) => Promise<unknown> | void;
+  onUpdateAssignment?: (data: { id:string; updates: AssignmentUpdate }) => Promise<unknown> | void;
   isUpdating?: boolean;
   children?: React.ReactNode;
   open?: boolean;
@@ -39,7 +41,7 @@ const EditAssignmentDialog = ({
   const [formData, setFormData] = useState({
     title: assignment.title,
     description: assignment.description || '',
-    due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().slice(0, 16) : ''
+    due_date: assignment.due_date ? format(new Date(assignment.due_date), "yyyy-MM-dd'T'HH:mm") : ''
   });
 
   useEffect(() => {
@@ -47,12 +49,12 @@ const EditAssignmentDialog = ({
       setFormData({
         title: assignment.title,
         description: assignment.description || '',
-        due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().slice(0, 16) : ''
+        due_date: assignment.due_date ? format(new Date(assignment.due_date), "yyyy-MM-dd'T'HH:mm") : ''
       });
     }
   }, [open, assignment]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
 
@@ -61,25 +63,33 @@ const EditAssignmentDialog = ({
       updates: {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
-        due_date: formData.due_date || null
+        due_date: formData.due_date
+          ? new Date(formData.due_date).toISOString()
+          : null
       }
     };
 
-    if (onUpdate) {
-      onUpdate(updateData);
-    } else if (onUpdateAssignment) {
-      onUpdateAssignment(updateData);
+    try {
+      if (onUpdate) {
+        await onUpdate(updateData);
+      } else if (onUpdateAssignment) {
+        await onUpdateAssignment(updateData);
+      }
+      setOpen(false);
+    } catch {
+      // The mutation toast reports the error and the form remains available.
     }
-
-    // We optimistically close the dialog. It can be improved to close on mutation success.
-    setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Edit ${assignment.title}`}
+          >
             <Edit className="h-4 w-4" />
           </Button>
         )}
