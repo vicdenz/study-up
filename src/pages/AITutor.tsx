@@ -116,7 +116,7 @@ const AITutor = () => {
         </header>
 
         <section className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col p-4 md:p-6">
-          <div className="gradient-border flex min-h-[680px] flex-1 flex-col overflow-hidden rounded-3xl shadow-xl shadow-violet-900/5">
+          <div className="flex min-h-[680px] flex-1 flex-col overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-blue-50/80 via-violet-50/80 to-fuchsia-50/80 px-5 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-fuchsia-600 text-white shadow-md"><Brain /></div>
