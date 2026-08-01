@@ -25,8 +25,7 @@ These control-plane steps require a human project owner:
 4. Confirm the production database major version with `show server_version;`.
    If it differs from `major_version = 17` in `supabase/config.toml`, update the
    committed local setting before relying on migration replay.
-5. Rotate and verify Gemini using
-   [`SECRETS_AND_E2E.md`](SECRETS_AND_E2E.md).
+5. Rotate and verify Gemini using [`SECURITY.md`](SECURITY.md).
 6. Connect the GitHub repository to Vercel, set Node.js 22, add the non-secret
    `ENABLE_EXPERIMENTAL_COREPACK=1` variable to Development, Preview, and
    Production, and configure only

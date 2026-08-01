@@ -36,37 +36,16 @@ The `main` branch owns the seven required checks and strict up-to-date rule.
 It does not require an approval, which keeps the workflow practical for a
 single maintainer.
 
-## Supabase staging database
+## Supabase staging backend
 
-The desired database topology is a persistent Supabase `staging` branch in the
-same Supabase project, cloned with production data and reset after each
-production merge. Supabase implements this as an isolated environment with its
-own database, Auth, Storage, Edge Functions, and credentials—not as a second
-schema inside production.
+Staging currently uses the main Supabase project. RLS and dedicated test users
+provide user isolation, but staging is not infrastructure-isolated from
+production. Do not run destructive tests or copy production user data into test
+fixtures. The CI integration suite uses a disposable local Supabase stack.
 
-The current Supabase organization is on a plan where branching is unavailable
-(`402 entitlement_required`). Upgrade the organization to Pro or provide a
-separate staging project before enabling this lifecycle. The intended state is
-declared in `infra/environments/staging.json`; no production data has been
-copied while the feature is unavailable.
-
-After enabling Pro branching, create the persistent branch with:
-
-```bash
-pnpm exec supabase branches create staging \
-  --project-ref hzkwaecgggkjikwlvghi \
-  --region us-east-1 \
-  --size micro \
-  --persistent \
-  --with-data \
-  --git-branch staging
-```
-
-The automatic post-`main` reset requires a fine-grained Supabase access token
-with branch-management write permission, stored as the GitHub Actions secret
-`SUPABASE_ACCESS_TOKEN`. That credential is intentionally not created by this
-repository because it grants control-plane access and must be issued by the
-project owner after the plan upgrade.
+`infra/environments/staging.json` records the future isolated-branch topology,
+but it is not active while Supabase branching is unavailable on the current
+plan. Do not treat that declaration as a deployed database.
 
 ## AI CORS policy
 

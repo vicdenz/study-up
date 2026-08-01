@@ -86,18 +86,16 @@ errors, and server failures.
 See [docs/TESTING.md](docs/TESTING.md) for the complete local/CI command matrix,
 coverage reports, database cleanup behavior, and deployed-product tests.
 
-Live product tests require a deployed URL and a dedicated test account. They
-exercise course CRUD and make a real authenticated Gemini request. See
-[docs/SECRETS_AND_E2E.md](docs/SECRETS_AND_E2E.md) for safe secret rotation and
-test commands.
+Live product tests require a deployed URL and two dedicated test accounts. They
+exercise authenticated product flows and a real Gemini request. See
+[docs/SECURITY.md](docs/SECURITY.md) for secret rotation and trust boundaries.
 
 ## Deployment
 
-The repository includes `vercel.json` for Vite builds, SPA deep-link rewrites, immutable asset caching, and baseline security headers. Follow [docs/VERCEL_MIGRATION.md](docs/VERCEL_MIGRATION.md) for the staged migration and rollback procedure.
-
-The audit and remediation record is in [docs/AUDIT.md](docs/AUDIT.md).
-The exact operator setup, local commands, test matrix, and protected Vercel
-deployment workflow are in
+The repository includes `vercel.json` for Vite builds, SPA deep-link rewrites,
+immutable asset caching, and security headers. The environment and promotion
+model is in [docs/STAGING.md](docs/STAGING.md). Operator setup, local commands,
+and the protected Vercel deployment workflow are in
 [docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md](docs/LOCAL_DEVELOPMENT_AND_DEPLOYMENT.md).
 
 ## License
