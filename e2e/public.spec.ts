@@ -6,11 +6,11 @@ test.describe("@public public and unauthenticated journeys", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: "Unlock Your Academic Potential" }),
+      page.getByRole("heading", { name: /Turn your coursework into clarity/ }),
     ).toBeVisible();
-    await expect(page.getByAltText("StudyUp application screenshot")).toBeVisible();
+    await expect(page.getByAltText("StudyUp dashboard showing courses and upcoming work")).toBeVisible();
 
-    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("button", { name: "Log in" }).click();
     await expect(page).toHaveURL(/\/auth$/);
     await expect(
       page.getByRole("heading", { name: "Welcome back" }),
@@ -52,7 +52,7 @@ test.describe("@public public and unauthenticated journeys", () => {
   test("primary actions are reachable by keyboard", async ({ page }) => {
     await page.goto("/");
 
-    const loginButton = page.getByRole("button", { name: "Login" });
+    const loginButton = page.getByRole("button", { name: "Log in" });
     for (let tabPresses = 0; tabPresses < 5; tabPresses += 1) {
       if (await loginButton.evaluate((element) => element === document.activeElement)) {
         break;
@@ -134,5 +134,19 @@ test.describe("@public public and unauthenticated journeys", () => {
       caret: "hide",
       maxDiffPixelRatio: 0.01,
     });
+  });
+
+  test("matches the reviewed landing layout", async ({ page }, testInfo) => {
+    test.skip(
+      !["chromium", "mobile-chromium"].includes(testInfo.project.name),
+      "Landing visual baselines use deterministic Chromium desktop and mobile projects.",
+    );
+
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Turn your coursework into clarity/ })).toBeVisible();
+    await expect(page.locator("body")).toHaveScreenshot(
+      `landing-page-${testInfo.project.name}.png`,
+      { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 },
+    );
   });
 });
