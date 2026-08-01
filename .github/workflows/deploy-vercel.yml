@@ -20,7 +20,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require main for production deployments
+        env:
+          DEPLOY_TARGET: ${{ inputs.target }}
+          SOURCE_REF: ${{ github.ref }}
+        run: |
+          if [ "$DEPLOY_TARGET" = production ] && [ "$SOURCE_REF" != refs/heads/main ]; then
+            echo "Production deployments must run from refs/heads/main." >&2
+            exit 1
+          fi
+
   deploy:
+    needs: validate-target
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
     env:

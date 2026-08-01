@@ -41,6 +41,18 @@ const createProject = () => {
     buildCommand: "pnpm build",
     outputDirectory: "dist",
     rewrites: [{ source: "/(.*)", destination: "/index.html" }],
+    headers: [{
+      source: "/(.*)",
+      headers: [
+        { key: "Content-Security-Policy", value: "default-src 'self'; object-src 'none'; frame-ancestors 'none'; connect-src 'self' https://*.supabase.co wss://*.supabase.co" },
+        { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        { key: "Permissions-Policy", value: "camera=()" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Strict-Transport-Security", value: "max-age=63072000" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "X-Frame-Options", value: "DENY" },
+      ],
+    }],
   });
   writeJson(root, "infra/environments/staging.json", {
     name: "staging",
@@ -143,6 +155,22 @@ const createProject = () => {
       "",
     ].join("\n"),
   );
+  writeFileSync(
+    resolve(root, ".github/workflows/deploy-vercel.yml"),
+    [
+      "jobs:",
+      "  validate-target:",
+      "    steps:",
+      "      - name: Require main for production deployments",
+      "        run: |",
+      '          if [ "$DEPLOY_TARGET" = production ] && [ "$SOURCE_REF" != refs/heads/main ]; then',
+      "            exit 1",
+      "          fi",
+      "  deploy:",
+      "    needs: validate-target",
+      "",
+    ].join("\n"),
+  );
   writeFileSync(resolve(root, ".vercelignore"), "/supabase\n");
   writeFileSync(resolve(root, "pnpm-workspace.yaml"), 'packages:\n  - "."\n');
   writeFileSync(resolve(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
@@ -217,6 +245,38 @@ describe("infrastructure verifier", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("must pin the approved pnpm release");
+  });
+
+  test("rejects deployment configuration without a content security policy", () => {
+    const root = createProject();
+    const path = resolve(root, "vercel.json");
+    const config = JSON.parse(readFileSync(path, "utf8"));
+    config.headers[0].headers = config.headers[0].headers.filter(
+      ({ key }: { key: string }) => key !== "Content-Security-Policy",
+    );
+    writeJson(root, "vercel.json", config);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Content-Security-Policy security header");
+  });
+
+  test("rejects manual production deployment from an unrestricted branch", () => {
+    const root = createProject();
+    const path = resolve(root, ".github/workflows/deploy-vercel.yml");
+    writeFileSync(
+      path,
+      readFileSync(path, "utf8").replace(
+        '"$SOURCE_REF" != refs/heads/main',
+        '"$SOURCE_REF" != refs/heads/staging',
+      ),
+    );
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("restricted to main");
   });
 
   test("requires the project root in the pnpm workspace", () => {
@@ -334,12 +394,10 @@ describe("infrastructure verifier", () => {
 
   test("requires the SPA deep-link rewrite", () => {
     const root = createProject();
-    writeJson(root, "vercel.json", {
-      framework: "vite",
-      buildCommand: "pnpm build",
-      outputDirectory: "dist",
-      rewrites: [],
-    });
+    const path = resolve(root, "vercel.json");
+    const config = JSON.parse(readFileSync(path, "utf8"));
+    config.rewrites = [];
+    writeJson(root, "vercel.json", config);
 
     const result = runVerifier(root);
 
@@ -502,13 +560,10 @@ describe("infrastructure verifier", () => {
     "SUPABASE_SECRET_KEY",
   ])("rejects browser deployment exposure of %s", (secretName) => {
     const root = createProject();
-    writeJson(root, "vercel.json", {
-      framework: "vite",
-      buildCommand: "pnpm build",
-      outputDirectory: "dist",
-      rewrites: [{ source: "/(.*)", destination: "/index.html" }],
-      env: { [secretName]: "unsafe" },
-    });
+    const path = resolve(root, "vercel.json");
+    const config = JSON.parse(readFileSync(path, "utf8"));
+    config.env = { [secretName]: "unsafe" };
+    writeJson(root, "vercel.json", config);
 
     const result = runVerifier(root);
 
