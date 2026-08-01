@@ -1,75 +1,72 @@
-
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import Brand from "@/components/Brand";
+import UserMenu from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
-import { Brain, X } from "lucide-react";
-import { Link, useNavigate } from "@/lib/router";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { useNavigate } from "@/lib/router";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const destination = user ? "/dashboard" : "/auth";
 
   return (
-    <div className="bg-background text-foreground flex flex-col min-h-screen">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+    <div className="app-background relative flex min-h-screen flex-col overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8b5cf60c_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf60c_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-      <header className="container mx-auto px-6 py-4 flex justify-between items-center z-10">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Brain className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold">StudyUp</span>
-        </Link>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <Button variant="ghost" onClick={() => navigate('/auth')}>
-            Login
-          </Button>
-          <Button onClick={() => navigate('/auth')} variant="default">
-            Get Started for Free
-          </Button>
+      <header className="container z-10 mx-auto flex items-center justify-between px-6 py-5">
+        <Brand />
+        <div className="flex items-center gap-2 md:gap-3">
+          {user ? (
+            <>
+              <span className="hidden text-sm text-slate-600 sm:inline">
+                Welcome back{profile?.first_name ? `, ${profile.first_name}` : ""}
+              </span>
+              <Button variant="outline" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+              <UserMenu />
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => navigate("/auth")}>Log in</Button>
+              <Button onClick={() => navigate("/auth")}>Get started</Button>
+            </>
+          )}
         </div>
       </header>
 
-      <main className="container mx-auto px-6 flex-grow flex flex-col pt-16 md:pt-24 z-10">
-        <div className="max-w-3xl">
-          <h1 className="text-[40px] leading-[44px] font-medium tracking-[-.06rem] bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 py-2">
-            Unlock Your Academic Potential
+      <main className="container z-10 mx-auto flex flex-1 flex-col px-6 pt-14 md:pt-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/70 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm backdrop-blur">
+            <Sparkles className="h-4 w-4" /> Your personalized learning workspace
+          </div>
+          <h1 className="text-5xl font-bold tracking-tight text-slate-950 md:text-7xl">
+            Turn your coursework into <span className="text-gradient">clarity.</span>
           </h1>
-          <p className="mt-4 text-sm md:text-base text-muted-foreground">
-            StudyUp is the all-in-one academic planner and AI tutor. Organize your schedule, manage assignments, and get instant help.
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
+            Keep courses, assignments, notes, and study materials together—then use an AI tutor that understands the context you are working in.
           </p>
-          <div className="mt-8 mb-5">
-            <Button size="lg" onClick={() => navigate('/auth')} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2">
-              Try it Out
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" onClick={() => navigate(destination)}>
+              {user ? "Open your dashboard" : "Start studying for free"}<ArrowRight />
             </Button>
+            <div className="flex items-center gap-2 px-3 text-sm text-slate-500"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Built for focused study</div>
           </div>
         </div>
 
-        <div className="relative mt-8 md:mt-16 w-full">
-          <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-20 blur-2xl"></div>
-          <img 
-            src="/studyup-dashboard.png"
-            alt="StudyUp application screenshot" 
-            className="relative rounded-lg shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
-          />
+        <div className="relative mx-auto mt-16 w-full max-w-6xl md:mt-24">
+          <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-r from-blue-400 via-violet-500 to-fuchsia-500 opacity-25 blur-3xl" />
+          <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-white p-2 shadow-2xl shadow-violet-900/15">
+            <img src="/studyup-dashboard.png" alt="StudyUp dashboard showing courses and upcoming work" className="w-full rounded-xl" />
+          </div>
         </div>
       </main>
 
-      <footer className="container mx-auto px-6 py-8 mt-16 md:mt-24 flex justify-between items-center text-muted-foreground text-sm z-10">
-        <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-                <Brain className="h-4 w-4 text-primary-foreground" />
-            </div>
-        </div>
-        <div className="flex items-center space-x-4">
-            <a aria-label="LinkedIn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <span aria-hidden="true" className="font-semibold">in</span>
-            </a>
-            <a aria-label="X" href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <X className="h-5 w-5" />
-            </a>
-            <a aria-label="GitHub" href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <span aria-hidden="true" className="font-semibold">GH</span>
-            </a>
-        </div>
-    </footer>
+      <footer className="container z-10 mx-auto mt-20 flex items-center justify-between border-t border-violet-100 px-6 py-8 text-sm text-slate-500">
+        <Brand compact />
+        <span>Plan less. Learn more.</span>
+      </footer>
     </div>
   );
 };

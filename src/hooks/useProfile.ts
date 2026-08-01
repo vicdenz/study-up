@@ -1,20 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
-import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import type { Database } from '@/integrations/supabase/types';
+
+type ProfileUpdate = Pick<
+  Database['public']['Tables']['profiles']['Update'],
+  'first_name' | 'last_name'
+>;
 
 export const useProfile = () => {
-  const [session, setSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const userId = session?.user?.id;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const userId = user?.id;
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile', userId],
@@ -23,7 +20,7 @@ export const useProfile = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name')
+        .select('first_name, last_name, email, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -37,5 +34,30 @@ export const useProfile = () => {
     enabled: !!userId,
   });
 
-  return { profile, isLoading, error };
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: ProfileUpdate) => {
+      if (!userId) throw new Error('Not authenticated');
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+        .select('first_name, last_name, email, avatar_url')
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (profile) => {
+      queryClient.setQueryData(['profile', userId], profile);
+    },
+  });
+
+  return {
+    profile,
+    user,
+    isLoading,
+    error,
+    updateProfile: updateProfileMutation.mutateAsync,
+    isUpdating: updateProfileMutation.isPending,
+  };
 };
