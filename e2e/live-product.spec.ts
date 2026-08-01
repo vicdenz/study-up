@@ -327,7 +327,10 @@ test.describe("@authenticated authenticated product journeys", () => {
         mimeType: "text/plain",
         buffer: Buffer.from(contents),
       });
-      await expect(page.getByText(fileName, { exact: true })).toBeVisible({
+      const materialName = page.getByRole("paragraph").filter({
+        hasText: new RegExp(`^${fileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+      });
+      await expect(materialName).toBeVisible({
         timeout: 20_000,
       });
 
@@ -336,7 +339,7 @@ test.describe("@authenticated authenticated product journeys", () => {
         page.getByText("No materials match your search criteria"),
       ).toBeVisible();
       await page.getByPlaceholder("Search materials...").fill(fileName);
-      await expect(page.getByText(fileName, { exact: true })).toBeVisible();
+      await expect(materialName).toBeVisible();
 
       const viewPromise = page.waitForEvent("popup");
       await page.getByRole("button", { name: `View ${fileName}` }).click();
@@ -350,7 +353,7 @@ test.describe("@authenticated authenticated product journeys", () => {
         contents,
       );
       await page.getByRole("button", { name: `Delete ${fileName}` }).click();
-      await expect(page.getByText(fileName, { exact: true })).toHaveCount(0);
+      await expect(materialName).toHaveCount(0);
       await page.getByPlaceholder("Search materials...").fill("");
     };
 
