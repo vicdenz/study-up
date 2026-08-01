@@ -44,6 +44,21 @@ async function createCourse(page: Page, courseName: string) {
   });
 }
 
+async function createAssignment(
+  page: Page,
+  courseName: string,
+  assignmentName: string,
+) {
+  await page.getByText(courseName, { exact: true }).click();
+  await page.getByRole("button", { name: "Add Assignment" }).first().click();
+  await page.getByLabel("Assignment Title").fill(assignmentName);
+  await page.getByLabel("Due Date (Optional)").fill("2099-12-31T17:30");
+  await page.getByRole("button", { name: "Create Assignment" }).click();
+  await expect(page.getByText(assignmentName, { exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
 async function deleteCourseIfPresent(page: Page, courseName: string) {
   await navigate(page, "/courses");
   const deleteButton = page.getByRole("button", {
@@ -263,6 +278,74 @@ test.describe("@authenticated authenticated product journeys", () => {
     }
   });
 
+  test("manages course and assignment files from the upload workspace", async ({
+    page,
+  }) => {
+    const courseName = uniqueName("E2E Upload Workspace");
+    const assignmentName = uniqueName("E2E Upload Assignment");
+    const courseFile = `course-${crypto.randomUUID().slice(0, 8)}.txt`;
+    const assignmentFile = `assignment-${crypto.randomUUID().slice(0, 8)}.txt`;
+    let courseCreated = false;
+
+    const chooseSelectOption = async (label: string, option: string) => {
+      await page.getByLabel(label).click();
+      await page.getByRole("option", { name: option, exact: true }).click();
+    };
+
+    const uploadAndVerify = async (fileName: string, contents: string) => {
+      await page.locator("#file-upload").setInputFiles({
+        name: fileName,
+        mimeType: "text/plain",
+        buffer: Buffer.from(contents),
+      });
+      await expect(page.getByText(fileName, { exact: true })).toBeVisible({
+        timeout: 20_000,
+      });
+
+      await page.getByPlaceholder("Search materials...").fill("no-match-value");
+      await expect(
+        page.getByText("No materials match your search criteria"),
+      ).toBeVisible();
+      await page.getByPlaceholder("Search materials...").fill(fileName);
+      await expect(page.getByText(fileName, { exact: true })).toBeVisible();
+
+      const viewPromise = page.waitForEvent("popup");
+      await page.getByRole("button", { name: `View ${fileName}` }).click();
+      const viewer = await viewPromise;
+      await expect(viewer.locator("body")).toContainText(contents);
+      await viewer.close();
+
+      const downloadPromise = page.waitForEvent("download");
+      await page.getByRole("button", { name: `Download ${fileName}` }).click();
+      expect((await readDownload(await downloadPromise)).toString("utf8")).toBe(
+        contents,
+      );
+      await page.getByRole("button", { name: `Delete ${fileName}` }).click();
+      await expect(page.getByText(fileName, { exact: true })).toHaveCount(0);
+      await page.getByPlaceholder("Search materials...").fill("");
+    };
+
+    try {
+      await signIn(page);
+      await createCourse(page, courseName);
+      courseCreated = true;
+      await createAssignment(page, courseName, assignmentName);
+      await navigate(page, "/upload");
+
+      await chooseSelectOption("1. Select a Course", courseName);
+      await uploadAndVerify(courseFile, "Course upload workspace contents");
+
+      await page.getByLabel("Assignment Material").click();
+      await chooseSelectOption("3. Select an Assignment", assignmentName);
+      await uploadAndVerify(
+        assignmentFile,
+        "Assignment upload workspace contents",
+      );
+    } finally {
+      if (courseCreated) await deleteCourseIfPresent(page, courseName);
+    }
+  });
+
   test("keeps one user's courses isolated from a second user", async ({
     page,
     browser,
@@ -331,6 +414,54 @@ test.describe("@authenticated authenticated product journeys", () => {
     await expect(
       page.getByRole("dialog", { name: "Create event for selected time" }),
     ).toHaveCount(0);
+  });
+
+  test("creates, completes, and deletes a planner study session", async ({
+    page,
+  }) => {
+    const courseName = uniqueName("E2E Planner Course");
+    const sessionName = uniqueName("E2E Study Session");
+    let courseCreated = false;
+
+    try {
+      await signIn(page);
+      await createCourse(page, courseName);
+      courseCreated = true;
+      await navigate(page, "/planner");
+
+      const slot = page
+        .getByRole("button", { name: /Sunday, .*, 12 AM/ })
+        .first();
+      await slot.click();
+      await page.getByRole("button", { name: "Create Study Session" }).click();
+      await page.getByPlaceholder("Enter session title").fill(sessionName);
+      await page.getByLabel("Course").click();
+      await page.getByRole("option", { name: courseName, exact: true }).click();
+      await page.getByLabel("Duration (minutes)").fill("45");
+      await page
+        .getByPlaceholder("Add any notes or goals for this session")
+        .fill("Planner lifecycle coverage");
+      await page.getByRole("button", { name: "Create Session" }).click();
+
+      const eventButton = page.getByRole("button", {
+        name: `Open study session ${sessionName}`,
+      });
+      await expect(eventButton).toBeVisible({ timeout: 15_000 });
+      await eventButton.click();
+      await expect(page.getByText(sessionName, { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Mark as Complete" }).click();
+      await expect(
+        page.getByRole("button", { name: "Mark as Incomplete" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Delete Session" }).click();
+      await page
+        .getByRole("alertdialog")
+        .getByRole("button", { name: "Delete", exact: true })
+        .click();
+      await expect(eventButton).toHaveCount(0);
+    } finally {
+      if (courseCreated) await deleteCourseIfPresent(page, courseName);
+    }
   });
 
   test("Gemini tutor honors the browser-to-function response contract", async ({
