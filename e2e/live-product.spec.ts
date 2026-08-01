@@ -207,6 +207,34 @@ test.describe("@authenticated authenticated product journeys", () => {
 
       await page.getByRole("button", { name: "Back to Notebook" }).click();
       await expect(page.getByText(noteTitle, { exact: true })).toBeVisible();
+
+      let summaryRequest: { message?: string; context?: string } | undefined;
+      await page.route("**/functions/v1/chat-with-gemini", async (route) => {
+        summaryRequest = route.request().postDataJSON();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ response: "Persistent E2E note summary" }),
+        });
+      });
+      await page.getByRole("button", { name: "Generate AI Summary" }).click();
+      await expect(
+        page.getByText("Persistent E2E note summary", { exact: true }),
+      ).toBeVisible({ timeout: 15_000 });
+      expect(summaryRequest?.message).toContain("Summarize these notes");
+      expect(summaryRequest?.context).toBe(noteContent);
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(
+        page.getByText("Persistent E2E note summary", { exact: true }),
+      ).toBeVisible();
+      await page.getByPlaceholder("Search notes...").fill("missing-note-query");
+      await expect(page.getByText("No notes match your filters")).toBeVisible();
+      await page.getByPlaceholder("Search notes...").fill(noteTitle);
+      await expect(page.getByText(noteTitle, { exact: true })).toBeVisible();
+      await page.getByText("autosave", { exact: true }).click();
+      await expect(page.getByText(noteTitle, { exact: true })).toBeVisible();
+
       await page.getByRole("button", { name: `Delete ${noteTitle}` }).click();
       await page
         .getByRole("alertdialog")
@@ -495,6 +523,23 @@ test.describe("@authenticated authenticated product journeys", () => {
     ).toBeVisible();
     expect(capturedBody).toMatchObject({ message: "Explain the chain rule." });
     expect(authorization).toMatch(/^Bearer /);
+
+    const chatTitle = uniqueName("E2E Saved Chat");
+    await page.getByRole("button", { name: "Save Chat" }).click();
+    await page.getByLabel("Chat Title").fill(chatTitle);
+    await page
+      .getByRole("dialog", { name: "Save Chat Session" })
+      .getByRole("button", { name: "Save", exact: true })
+      .click();
+    await expect(page.getByText("Chat saved successfully!")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.getByRole("button", { name: "Clear Chat" }).click();
+    await expect(
+      page.getByText("Start a conversation with your AI tutor!"),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save Chat" })).toBeDisabled();
   });
 
   test("@gemini Gemini tutor returns a live model response", async ({ page }) => {
