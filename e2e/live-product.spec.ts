@@ -480,7 +480,9 @@ test.describe("@authenticated authenticated product journeys", () => {
       });
       await expect(eventButton).toBeVisible({ timeout: 15_000 });
       await eventButton.click();
-      await expect(page.getByText(sessionName, { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: sessionName, exact: true }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Mark as Complete" }).click();
       await expect(
         page.getByRole("button", { name: "Mark as Incomplete" }),
