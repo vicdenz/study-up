@@ -13,9 +13,18 @@ const formatConsoleError = (message: ConsoleMessage) =>
 
 const observePageFailures = (page: Page, testInfo: TestInfo) => {
   const failures: string[] = [];
+  const isWebKitOfflineJourney =
+    testInfo.project.name.includes("webkit") &&
+    testInfo.title.includes("connectivity loss and recovery");
 
   page.on("console", (message) => {
-    if (message.type() === "error") failures.push(formatConsoleError(message));
+    const expectedOfflineTransportError =
+      isWebKitOfflineJourney &&
+      message.type() === "error" &&
+      message.text() === "Failed to load resource: WebKit encountered an internal error";
+    if (message.type() === "error" && !expectedOfflineTransportError) {
+      failures.push(formatConsoleError(message));
+    }
   });
   page.on("pageerror", (error) => {
     failures.push(`pageerror: ${error.message}`);
