@@ -55,6 +55,27 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+start_owned_supabase() {
+  local start_command="$1"
+  local retry_delay="${SUPABASE_START_RETRY_DELAY_SECONDS:-5}"
+  local attempt
+
+  supabase_owned=1
+  for attempt in 1 2 3; do
+    if pnpm "$start_command"; then
+      return 0
+    fi
+
+    if [[ "$attempt" -lt 3 ]]; then
+      log "Supabase startup failed (attempt $attempt/3); cleaning partial state before retry"
+      pnpm supabase:stop --no-backup || true
+      sleep "$retry_delay"
+    fi
+  done
+
+  return 1
+}
+
 run_database_suite() {
   require_command docker
 
@@ -62,8 +83,7 @@ run_database_suite() {
     log "Using the Supabase stack that was already running"
   else
     log "Starting a disposable Supabase test stack"
-    supabase_owned=1
-    pnpm supabase:start:test
+    start_owned_supabase "supabase:start:test"
   fi
 
   log "Replaying migrations and seed data"
@@ -82,8 +102,7 @@ run_product_integration_suite() {
     pnpm supabase:start
   else
     log "Starting a disposable full Supabase product-test stack"
-    supabase_owned=1
-    pnpm supabase:start
+    start_owned_supabase "supabase:start"
   fi
 
   log "Replaying migrations and configuring isolated product-test users"
