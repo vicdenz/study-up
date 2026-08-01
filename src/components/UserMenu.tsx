@@ -47,11 +47,11 @@ const UserMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => toast.info("Profile management is coming soon")}>
           <User className="h-4 w-4 mr-2" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => toast.info("Settings are coming soon")}>
           <Settings className="h-4 w-4 mr-2" />
           Settings
         </DropdownMenuItem>
