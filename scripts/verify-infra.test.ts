@@ -114,11 +114,13 @@ const createProject = () => {
         "database",
         "integration-e2e",
       ],
+      directPushesAllowed: false,
       forcePushesAllowed: false,
       deletionAllowed: false,
     },
     github: {
       branchPolicy: "protected",
+      requirePullRequest: true,
       requiredPullRequestApprovals: 0,
       requireUpToDateBranch: true,
     },
@@ -468,6 +470,20 @@ describe("infrastructure verifier", () => {
     expect(result.stderr).toContain(
       "Production must own the seven checks",
     );
+  });
+
+  test("requires a pull request while allowing zero approvals on main", () => {
+    const root = createProject();
+    const path = resolve(root, "infra/environments/production.json");
+    const production = JSON.parse(readFileSync(path, "utf8"));
+    production.git.directPushesAllowed = true;
+    production.github.requirePullRequest = false;
+    writeJson(root, "infra/environments/production.json", production);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("protected branch controls");
   });
 
   test("requires the production-data staging reset policy", () => {

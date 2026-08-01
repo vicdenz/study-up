@@ -219,6 +219,8 @@ if (
   production.git?.repository !== "vicdenz/study-up" ||
   production.git?.branch !== "main" ||
   JSON.stringify(production.git.requiredChecks) !== JSON.stringify(expectedChecks) ||
+  production.git.directPushesAllowed !== false ||
+  production.github?.requirePullRequest !== true ||
   production.github?.requiredPullRequestApprovals !== 0 ||
   production.github?.requireUpToDateBranch !== true ||
   production.git.forcePushesAllowed ||

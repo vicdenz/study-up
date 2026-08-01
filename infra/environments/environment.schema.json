@@ -10,7 +10,7 @@
     },
     "github": {
       "type": "object",
-      "required": ["branchPolicy", "requiredPullRequestApprovals"]
+      "required": ["branchPolicy", "requirePullRequest", "requiredPullRequestApprovals"]
     },
     "vercel": {
       "type": "object",

@@ -38,6 +38,10 @@ pnpm dev
 Add your Supabase URL and publishable key to `.env.local`. Detailed setup,
 testing, security, and deployment instructions are in [`docs`](docs/).
 
+## License
+
+StudyUp is available under the [MIT License](LICENSE).
+
 ## Hackathon
 
 StudyUp won the **Lovable x Roam International Hackathon**, hosted by UTMIST.
