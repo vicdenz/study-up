@@ -76,7 +76,7 @@ const ProfileSettings = () => {
         </header>
 
         <div className="mx-auto grid max-w-5xl gap-6 p-6 lg:grid-cols-2">
-          <Card className="gradient-border">
+          <Card className="border-violet-200/80">
             <CardHeader>
               <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><UserRound /></div>
               <CardTitle className="text-xl">Your profile</CardTitle>
