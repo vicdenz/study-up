@@ -28,6 +28,7 @@ const validate = (
   delete env.E2E_PASSWORD;
   delete env.E2E_SECONDARY_EMAIL;
   delete env.E2E_SECONDARY_PASSWORD;
+  delete env.E2E_ALLOWED_ORIGINS;
   Object.assign(env, environment);
 
   return spawnSync(process.execPath, [validatorPath, mode], {
@@ -104,7 +105,8 @@ describe("E2E environment validator", () => {
 
   test("accepts an HTTPS preview with dedicated credentials", () => {
     const result = validate("live", {
-      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_BASE_URL:
+        "https://study-up-git-staging-david-daniliucs-projects.vercel.app",
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
       E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
@@ -128,7 +130,7 @@ describe("E2E environment validator", () => {
   });
 
   test.each([
-    "http://studyup-preview.vercel.app",
+    "http://study-up-pi.vercel.app",
     "ftp://127.0.0.1/resource",
     "not a url",
   ])("rejects unsafe or invalid live target %s", (baseUrl) => {
@@ -148,7 +150,7 @@ describe("E2E environment validator", () => {
 
   test("rejects malformed test-user credentials", () => {
     const result = validate("live", {
-      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_BASE_URL: "https://study-up-pi.vercel.app",
       E2E_EMAIL: "not-an-email",
       E2E_PASSWORD: "short",
       E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
@@ -162,7 +164,7 @@ describe("E2E environment validator", () => {
 
   test("requires both secondary isolation credentials", () => {
     const result = validate("live", {
-      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_BASE_URL: "https://study-up-pi.vercel.app",
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
       E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
@@ -176,7 +178,33 @@ describe("E2E environment validator", () => {
 
   test("accepts a complete secondary isolation account", () => {
     const result = validate("live", {
-      E2E_BASE_URL: "https://studyup-preview.vercel.app",
+      E2E_BASE_URL: "https://study-up-pi.vercel.app",
+      E2E_EMAIL: "studyup-e2e@example.test",
+      E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
+    });
+
+    expect(result.status).toBe(0);
+  });
+
+  test("rejects an arbitrary HTTPS origin before credentials are used", () => {
+    const result = validate("live", {
+      E2E_BASE_URL: "https://attacker.example",
+      E2E_EMAIL: "studyup-e2e@example.test",
+      E2E_PASSWORD: "a-long-test-password",
+      E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",
+      E2E_SECONDARY_PASSWORD: "another-long-test-password",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must be an approved StudyUp origin");
+  });
+
+  test("allows an explicitly configured custom production origin", () => {
+    const result = validate("live", {
+      E2E_BASE_URL: "https://studyup.example.com",
+      E2E_ALLOWED_ORIGINS: "https://studyup.example.com",
       E2E_EMAIL: "studyup-e2e@example.test",
       E2E_PASSWORD: "a-long-test-password",
       E2E_SECONDARY_EMAIL: "studyup-e2e-two@example.test",

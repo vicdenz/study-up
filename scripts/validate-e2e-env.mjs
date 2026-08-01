@@ -33,6 +33,10 @@ if (mode === "local") {
   const password = process.env.E2E_PASSWORD;
   const secondaryEmail = process.env.E2E_SECONDARY_EMAIL;
   const secondaryPassword = process.env.E2E_SECONDARY_PASSWORD;
+  const configuredOrigins = (process.env.E2E_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   if (!baseUrl) {
     errors.push("E2E_BASE_URL is required");
@@ -44,6 +48,24 @@ if (mode === "local") {
         url.protocol === "http:" && url.hostname === "127.0.0.1";
       if (!isHttps && !isLoopbackHttp) {
         errors.push("E2E_BASE_URL must use HTTPS unless it targets 127.0.0.1");
+      }
+      const trustedStudyUpHost =
+        url.hostname === "study-up-pi.vercel.app" ||
+        /^study-up(?:-[a-z0-9-]+)?-david-daniliucs-projects\.vercel\.app$/.test(
+          url.hostname,
+        );
+      const explicitlyAllowed = configuredOrigins.includes(url.origin);
+      if (
+        url.username ||
+        url.password ||
+        url.pathname !== "/" ||
+        url.search ||
+        url.hash ||
+        (!isLoopbackHttp && !trustedStudyUpHost && !explicitlyAllowed)
+      ) {
+        errors.push(
+          "E2E_BASE_URL must be an approved StudyUp origin with no credentials, path, query, or fragment",
+        );
       }
     } catch {
       errors.push("E2E_BASE_URL must be a valid absolute URL");

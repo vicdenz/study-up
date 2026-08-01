@@ -18,6 +18,10 @@ const stagingWorkflow = readFileSync(
   ".github/workflows/staging-gate.yml",
   "utf8",
 );
+const deployWorkflow = readFileSync(
+  ".github/workflows/deploy-vercel.yml",
+  "utf8",
+);
 const workflowFiles = readdirSync(".github/workflows")
   .filter((name) => /\.ya?ml$/.test(name))
   .map((name) => ({
@@ -64,6 +68,34 @@ if ("installCommand" in vercel) {
 }
 if (vercel.buildCommand !== "pnpm build") fail("Unexpected Vercel build command.");
 if (vercel.outputDirectory !== "dist") fail("Vercel output directory must be dist.");
+const globalHeaders = vercel.headers?.find(({ source }) => source === "/(.*)")
+  ?.headers ?? [];
+const headerValue = (key) =>
+  globalHeaders.find((header) => header.key === key)?.value;
+for (const requiredHeader of [
+  "Content-Security-Policy",
+  "Cross-Origin-Opener-Policy",
+  "Permissions-Policy",
+  "Referrer-Policy",
+  "Strict-Transport-Security",
+  "X-Content-Type-Options",
+  "X-Frame-Options",
+]) {
+  if (!headerValue(requiredHeader)) {
+    fail(`Vercel must set the ${requiredHeader} security header.`);
+  }
+}
+const contentSecurityPolicy = headerValue("Content-Security-Policy");
+for (const directive of [
+  "default-src 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+]) {
+  if (!contentSecurityPolicy.includes(directive)) {
+    fail(`Content Security Policy is missing: ${directive}.`);
+  }
+}
 if (vercelIgnore.includes("supabase")) {
   fail(
     ".vercelignore must root the Supabase backend pattern as /supabase so it does not exclude src/integrations/supabase.",
@@ -159,6 +191,13 @@ for (const workflow of workflowFiles) {
       `.github/workflows/${workflow.name} must disable persisted checkout credentials.`,
     );
   }
+}
+if (
+  !deployWorkflow.includes("Require main for production deployments") ||
+  !deployWorkflow.includes('"$SOURCE_REF" != refs/heads/main') ||
+  !deployWorkflow.includes("needs: validate-target")
+) {
+  fail("Manual production deployment must be restricted to main.");
 }
 if (
   !/^\s{6}- staging\s*$/m.test(stagingWorkflow) ||
