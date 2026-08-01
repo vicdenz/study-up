@@ -68,6 +68,14 @@ if ("installCommand" in vercel) {
 }
 if (vercel.buildCommand !== "pnpm build") fail("Unexpected Vercel build command.");
 if (vercel.outputDirectory !== "dist") fail("Vercel output directory must be dist.");
+if (
+  vercel.git?.deploymentEnabled?.["*"] !== false ||
+  vercel.git?.deploymentEnabled?.main !== true ||
+  vercel.git?.deploymentEnabled?.staging !== true ||
+  Object.keys(vercel.git.deploymentEnabled).length !== 3
+) {
+  fail("Vercel Git deployments must be limited to main and staging.");
+}
 const globalHeaders = vercel.headers?.find(({ source }) => source === "/(.*)")
   ?.headers ?? [];
 const headerValue = (key) =>

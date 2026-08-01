@@ -40,6 +40,13 @@ const createProject = () => {
     framework: "vite",
     buildCommand: "pnpm build",
     outputDirectory: "dist",
+    git: {
+      deploymentEnabled: {
+        "*": false,
+        main: true,
+        staging: true,
+      },
+    },
     rewrites: [{ source: "/(.*)", destination: "/index.html" }],
     headers: [{
       source: "/(.*)",
@@ -260,6 +267,19 @@ describe("infrastructure verifier", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Content-Security-Policy security header");
+  });
+
+  test("rejects Vercel deployments from branches other than main and staging", () => {
+    const root = createProject();
+    const path = resolve(root, "vercel.json");
+    const config = JSON.parse(readFileSync(path, "utf8"));
+    config.git.deploymentEnabled["dependabot/**"] = true;
+    writeJson(root, "vercel.json", config);
+
+    const result = runVerifier(root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("limited to main and staging");
   });
 
   test("rejects manual production deployment from an unrestricted branch", () => {
