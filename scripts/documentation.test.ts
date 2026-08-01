@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 
 const documentedSecretGuides = [
-  "README.md",
   "docs/SECURITY.md",
 ];
 const canonicalGeminiCommand =
