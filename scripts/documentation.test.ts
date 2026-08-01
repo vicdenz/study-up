@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const documentedSecretGuides = [
   "docs/SECURITY.md",
@@ -30,5 +30,17 @@ describe("Gemini secret documentation", () => {
     expect(guide).toContain("actual newline before `GEMINI_API_KEY`");
     expect(guide).toContain("`502 Bad Gateway`");
     expect(guide).toContain("retry the same command");
+  });
+});
+
+describe("project license", () => {
+  test("publishes the MIT license and links it from the README", () => {
+    const license = readFileSync("LICENSE", "utf8");
+    const readme = readFileSync("README.md", "utf8");
+
+    expect(existsSync("LICENSE")).toBe(true);
+    expect(license).toContain("MIT License");
+    expect(license).toContain("Copyright (c) 2026 StudyUp contributors");
+    expect(readme).toContain("[MIT License](LICENSE)");
   });
 });

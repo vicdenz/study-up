@@ -13,12 +13,13 @@
       "database",
       "integration-e2e"
     ],
-    "directPushesAllowed": true,
+    "directPushesAllowed": false,
     "forcePushesAllowed": false,
     "deletionAllowed": false
   },
   "github": {
     "branchPolicy": "protected",
+    "requirePullRequest": true,
     "requiredPullRequestApprovals": 0,
     "dismissStaleReviews": false,
     "requireConversationResolution": false,
