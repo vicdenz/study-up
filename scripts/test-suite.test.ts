@@ -77,6 +77,7 @@ exit 0
       PATH: `${bin}${delimiter}/usr/bin${delimiter}/bin`,
       TEST_COMMAND_LOG: log,
       TEST_FAIL_COMMAND: failCommand ?? "",
+      SUPABASE_START_RETRY_DELAY_SECONDS: "0",
     },
     log,
   };
@@ -200,6 +201,25 @@ describe("test suite shell entry point", () => {
     expect(result.status).toBe(7);
     expect(result.commands.at(-1)).toBe("pnpm supabase:stop --no-backup");
     expect(result.commands).not.toContain("pnpm db:lint");
+  });
+
+  test("cleans partial Supabase state and retries startup failures", () => {
+    const result = runSuite("database", {
+      failCommand: "supabase:start:test",
+    });
+
+    expect(result.status).toBe(1);
+    expect(
+      result.commands.filter(
+        (command) => command === "pnpm supabase:start:test",
+      ),
+    ).toHaveLength(3);
+    expect(
+      result.commands.filter(
+        (command) => command === "pnpm supabase:stop --no-backup",
+      ),
+    ).toHaveLength(3);
+    expect(result.stdout).toContain("cleaning partial state before retry");
   });
 
   test("provisions and cleans up an owned full product integration stack", () => {
