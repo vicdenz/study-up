@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, LayoutDashboard } from "lucide-react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import ActionButton from "@/components/ActionButton";
 import Brand from "@/components/Brand";
 import PageHeader from "@/components/PageHeader";
@@ -40,13 +40,12 @@ const LandingPage = () => {
             Turn your coursework into <span className="text-gradient">clarity.</span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
-            Keep courses, assignments, notes, and study materials together—then use an AI tutor that understands the context you are working in.
+            Everything you study, together in one place. Get answers from an AI tutor that understands your coursework.
           </p>
-          <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <div className="mt-8">
             <Button variant="gradient" size="lg" onClick={() => navigate(destination)}>
               {user ? "Open your dashboard" : "Start studying for free"}<ArrowRight />
             </Button>
-            <div className="flex items-center gap-2 text-sm text-slate-500"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Built for focused study</div>
           </div>
         </div>
 
