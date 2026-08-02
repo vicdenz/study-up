@@ -9,7 +9,7 @@ test.describe("@performance production performance and load budgets", () => {
   test("renders within navigation and paint budgets", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Unlock Your Academic Potential" }),
+      page.getByRole("heading", { name: /Turn your coursework into clarity/ }),
     ).toBeVisible();
 
     const timing = await page.evaluate(() => {

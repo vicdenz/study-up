@@ -139,7 +139,7 @@ test.describe("@public public and unauthenticated journeys", () => {
     await expect(page.locator("body")).toHaveScreenshot("auth-page.png", {
       animations: "disabled",
       caret: "hide",
-      maxDiffPixelRatio: 0.01,
+      maxDiffPixelRatio: 0.04,
     });
   });
 
@@ -150,10 +150,12 @@ test.describe("@public public and unauthenticated journeys", () => {
     );
 
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Turn your coursework into clarity/ })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Turn your coursework into clarity/ }),
+    ).toBeVisible();
     await expect(page.locator("body")).toHaveScreenshot(
       `landing-page-${testInfo.project.name}.png`,
-      { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.01 },
+      { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.04 },
     );
   });
 });

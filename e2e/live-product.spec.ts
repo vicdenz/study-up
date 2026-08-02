@@ -467,7 +467,7 @@ test.describe("@authenticated authenticated product journeys", () => {
       await slot.click();
       await page.getByRole("button", { name: "Create Study Session" }).click();
       await page.getByPlaceholder("Enter session title").fill(sessionName);
-      await page.getByLabel("Course").click();
+      await page.getByRole("combobox", { name: "Course" }).click();
       await page.getByRole("option", { name: courseName, exact: true }).click();
       await page.getByLabel("Duration (minutes)").fill("45");
       await page

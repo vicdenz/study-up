@@ -13,15 +13,15 @@ const formatConsoleError = (message: ConsoleMessage) =>
 
 const observePageFailures = (page: Page, testInfo: TestInfo) => {
   const failures: string[] = [];
-  const isWebKitOfflineJourney =
-    testInfo.project.name.includes("webkit") &&
-    testInfo.title.includes("connectivity loss and recovery");
+  const isOfflineJourney = testInfo.title.includes("connectivity loss and recovery");
 
   page.on("console", (message) => {
     const expectedOfflineTransportError =
-      isWebKitOfflineJourney &&
+      isOfflineJourney &&
       message.type() === "error" &&
-      message.text() === "Failed to load resource: WebKit encountered an internal error";
+      /Failed to load resource: (?:net::ERR_INTERNET_DISCONNECTED|WebKit encountered an internal error)/.test(
+        message.text(),
+      );
     if (message.type() === "error" && !expectedOfflineTransportError) {
       failures.push(formatConsoleError(message));
     }
