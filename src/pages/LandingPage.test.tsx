@@ -33,6 +33,14 @@ describe("LandingPage authentication states", () => {
     expect(container.querySelector("header > div")).toHaveClass("app-page-header-content");
     expect(screen.getByText(/Everything you study, together in one place/)).toBeVisible();
     expect(screen.queryByText("Built for focused study")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "@vicdenz" })).toHaveAttribute(
+      "href",
+      "https://github.com/vicdenz",
+    );
+    expect(screen.getByRole("link", { name: "@reyabsaluja" })).toHaveAttribute(
+      "href",
+      "https://github.com/reyabsaluja",
+    );
     expect(screen.getByRole("button", { name: "Log in" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Start studying for free" }));
     expect(mocks.navigate).toHaveBeenCalledWith("/auth?mode=signup");

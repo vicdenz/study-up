@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "@/lib/router";
 
+const creators = [
+  { username: "vicdenz", avatar: "https://avatars.githubusercontent.com/u/107334013?v=4&s=64" },
+  { username: "reyabsaluja", avatar: "https://avatars.githubusercontent.com/u/114021780?v=4&s=64" },
+];
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -57,9 +62,32 @@ const LandingPage = () => {
         </div>
       </main>
 
-      <footer className="container z-10 mx-auto flex items-center justify-between border-t border-violet-100 px-6 py-8 text-sm text-slate-500">
+      <footer className="container z-10 mx-auto flex flex-col items-center justify-between gap-4 border-t border-violet-100 px-6 py-8 text-sm text-slate-500 sm:flex-row">
         <Brand compact />
-        <span>Plan less. Learn more.</span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span>Built by</span>
+          {creators.map(({ username, avatar }, index) => (
+            <div key={username} className="flex items-center gap-2">
+              {index > 0 && <span aria-hidden="true">and</span>}
+              <a
+                href={`https://github.com/${username}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 font-medium text-slate-700 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+              >
+                <img
+                  src={avatar}
+                  alt=""
+                  width={24}
+                  height={24}
+                  referrerPolicy="no-referrer"
+                  className="h-6 w-6 rounded-full ring-1 ring-slate-900/10"
+                />
+                @{username}
+              </a>
+            </div>
+          ))}
+        </div>
       </footer>
     </div>
   );
