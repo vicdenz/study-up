@@ -154,7 +154,7 @@ const AITutor = () => {
                           {(visibleText) => <div className="prose prose-sm max-w-none break-words prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:bg-slate-900"><ReactMarkdown>{visibleText}</ReactMarkdown></div>}
                         </TypewriterText>
                       ) : <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>}
-                      <p className={`mt-2 text-[11px] ${message.role === "user" ? "text-white/65" : "text-slate-400"}`}>{message.timestamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
+                      <p className={`mt-1 text-[10px] ${message.role === "user" ? "text-white/65" : "text-slate-400"}`}>{message.timestamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
                     </div>
                   </div>
                 ))}
