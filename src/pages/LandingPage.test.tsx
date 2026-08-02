@@ -31,6 +31,8 @@ describe("LandingPage authentication states", () => {
       "app-page-header--transparent",
     );
     expect(container.querySelector("header > div")).toHaveClass("app-page-header-content");
+    expect(screen.getByText(/Everything you study, together in one place/)).toBeVisible();
+    expect(screen.queryByText("Built for focused study")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log in" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Start studying for free" }));
     expect(mocks.navigate).toHaveBeenCalledWith("/auth?mode=signup");
