@@ -118,9 +118,9 @@ const AITutor = () => {
           </div>
         </PageHeader>
 
-        <section className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col p-4 md:p-6">
+        <section className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col p-2 md:p-4">
           <div className="flex min-h-[680px] flex-1 flex-col overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-blue-50/80 via-violet-50/80 to-fuchsia-50/80 px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-blue-50/80 via-violet-50/80 to-fuchsia-50/80 px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-fuchsia-600 text-white shadow-md"><Brain /></div>
                 <div><h2 className="font-semibold text-slate-900">StudyUp Tutor</h2><p className="text-xs text-slate-500">Powered by Gemini</p></div>
@@ -135,8 +135,8 @@ const AITutor = () => {
               </div>
             )}
 
-            <ScrollArea viewportRef={messagesViewportRef} className="min-h-0 flex-1 px-5">
-              <div className="mx-auto max-w-3xl space-y-6 py-6">
+            <ScrollArea viewportRef={messagesViewportRef} className="min-h-0 flex-1 px-3 md:px-4">
+              <div className="mx-auto max-w-4xl space-y-4 py-4">
                 {messages.length === 0 ? (
                   <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
                     <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-violet-700"><Sparkles className="h-7 w-7" /></div>
@@ -144,11 +144,11 @@ const AITutor = () => {
                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">Ask for an explanation, a study plan, practice questions, or help connecting ideas from your materials.</p>
                   </div>
                 ) : messages.map((message) => (
-                  <div key={message.id} className={`flex items-start gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <div key={message.id} className={`flex items-start gap-2 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${message.role === "user" ? "bg-slate-800 text-white" : "bg-violet-100 text-violet-700"}`}>
                       {message.role === "user" ? <UserRound className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                     </div>
-                    <div className={`min-w-0 max-w-[82%] rounded-2xl px-4 py-3 shadow-sm ${message.role === "user" ? "rounded-tr-sm bg-violet-600 text-white" : "rounded-tl-sm border border-violet-100 bg-white text-slate-800"}`}>
+                    <div className={`min-w-0 max-w-[88%] rounded-2xl px-3 py-2.5 shadow-sm shadow-slate-900/10 ${message.role === "user" ? "rounded-tr-sm bg-violet-600 text-white" : "rounded-tl-sm border border-violet-100 bg-white text-slate-800"}`}>
                       {message.role === "assistant" ? (
                         <TypewriterText text={message.content} animate={message.id === animatedMessageId}>
                           {(visibleText) => <div className="prose prose-sm max-w-none break-words prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:bg-slate-900"><ReactMarkdown>{visibleText}</ReactMarkdown></div>}
@@ -164,8 +164,8 @@ const AITutor = () => {
               </div>
             </ScrollArea>
 
-            <div className="border-t border-violet-100 bg-white/80 p-4">
-              <div className="mx-auto flex max-w-3xl items-end gap-3 rounded-2xl border border-violet-200 bg-white p-2 shadow-lg shadow-violet-900/5 focus-within:ring-2 focus-within:ring-violet-300/40">
+            <div className="border-t border-violet-100 bg-white/80 p-3">
+              <div className="mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-violet-200 bg-white p-2 shadow-lg shadow-violet-900/5 focus-within:ring-2 focus-within:ring-violet-300/40">
                 <Textarea value={inputMessage} onChange={(event) => setInputMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSendMessage(); } }} placeholder={placeholder} disabled={isLoading} rows={1} className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0" />
                 <Button size="icon" className="h-11 w-11 shrink-0 rounded-xl" aria-label="Send message" onClick={() => void handleSendMessage()} disabled={isLoading || !inputMessage.trim()}><Send /></Button>
               </div>
