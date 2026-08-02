@@ -8,8 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "@/lib/router";
 
 const creators = [
-  { username: "vicdenz", avatar: "https://avatars.githubusercontent.com/u/107334013?v=4&s=64" },
-  { username: "reyabsaluja", avatar: "https://avatars.githubusercontent.com/u/114021780?v=4&s=64" },
+  { username: "vicdenz", avatar: "/creators/vicdenz.jpg" },
+  { username: "reyabsaluja", avatar: "/creators/reyabsaluja.jpg" },
 ];
 
 const LandingPage = () => {
@@ -80,7 +80,6 @@ const LandingPage = () => {
                   alt=""
                   width={24}
                   height={24}
-                  referrerPolicy="no-referrer"
                   className="h-6 w-6 rounded-full ring-1 ring-slate-900/10"
                 />
                 @{username}
