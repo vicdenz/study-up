@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import ActionButton from "@/components/ActionButton";
 import Brand from "@/components/Brand";
@@ -67,13 +68,13 @@ const LandingPage = () => {
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           <span>Built by</span>
           {creators.map(({ username, avatar }, index) => (
-            <div key={username} className="flex items-center gap-1">
+            <Fragment key={username}>
               {index > 0 && <span aria-hidden="true">and</span>}
               <a
                 href={`https://github.com/${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 font-medium text-slate-700 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+                className="flex items-center gap-1 font-medium text-slate-700 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
               >
                 <img
                   src={avatar}
@@ -84,7 +85,7 @@ const LandingPage = () => {
                 />
                 @{username}
               </a>
-            </div>
+            </Fragment>
           ))}
         </div>
       </footer>
