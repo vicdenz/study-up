@@ -543,7 +543,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
     await page.getByRole("button", { name: "Clear Chat" }).click();
     await expect(
-      page.getByText("Start a conversation with your AI tutor!"),
+      page.getByRole("heading", { name: "What can we work through?" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Save Chat" })).toBeDisabled();
   });
