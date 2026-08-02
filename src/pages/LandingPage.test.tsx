@@ -33,13 +33,23 @@ describe("LandingPage authentication states", () => {
     expect(container.querySelector("header > div")).toHaveClass("app-page-header-content");
     expect(screen.getByText(/Everything you study, together in one place/)).toBeVisible();
     expect(screen.queryByText("Built for focused study")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "@vicdenz" })).toHaveAttribute(
+    const davidProfile = screen.getByRole("link", { name: "@vicdenz" });
+    expect(davidProfile).toHaveAttribute(
       "href",
       "https://github.com/vicdenz",
     );
-    expect(screen.getByRole("link", { name: "@reyabsaluja" })).toHaveAttribute(
+    expect(davidProfile.querySelector("img")).toHaveAttribute(
+      "src",
+      "/creators/vicdenz.jpg",
+    );
+    const reyabProfile = screen.getByRole("link", { name: "@reyabsaluja" });
+    expect(reyabProfile).toHaveAttribute(
       "href",
       "https://github.com/reyabsaluja",
+    );
+    expect(reyabProfile.querySelector("img")).toHaveAttribute(
+      "src",
+      "/creators/reyabsaluja.jpg",
     );
     expect(screen.getByRole("button", { name: "Log in" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Start studying for free" }));
