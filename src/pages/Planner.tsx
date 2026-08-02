@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addWeeks, subWeeks } from 'date-fns';
 import Navigation from '@/components/Navigation';
+import PageHeader from '@/components/PageHeader';
 import UserMenu from '@/components/UserMenu';
 import AddStudySessionDialog from '@/components/AddStudySessionDialog';
 import AddAssignmentDialog from '@/components/AddAssignmentDialog';
@@ -144,12 +145,9 @@ const Planner = () => {
     <div className="app-background h-screen flex font-sans overflow-hidden">
       <Navigation />
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="z-20 flex-shrink-0 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Planner</h1>
-            <UserMenu />
-          </div>
-        </header>
+        <PageHeader actions={<UserMenu />}>
+          <h1 className="text-xl font-semibold text-gray-900">Planner</h1>
+        </PageHeader>
 
         <div className="p-6 flex-1 flex overflow-hidden">
           <Card className="flex-1 flex flex-col overflow-hidden mr-6">

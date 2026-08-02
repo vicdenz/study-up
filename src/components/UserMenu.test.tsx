@@ -35,22 +35,26 @@ describe("UserMenu", () => {
     signOut.mockResolvedValue({ error: null });
   });
 
-  test("shows the signed-in identity", async () => {
-    await openMenu();
-    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.getByText("ada@example.com")).toBeInTheDocument();
+  test("shows exactly the profile and logout actions", async () => {
+    const user = userEvent.setup();
+    render(<UserMenu />);
+    const trigger = screen.getByRole("button", { name: "Open user menu" });
+    expect(trigger).toHaveClass("h-11", "w-11");
+    await user.click(trigger);
+    expect(screen.getByText("AL")).toBeVisible();
+    expect(screen.getAllByRole("menuitem")).toHaveLength(2);
+    expect(screen.getByRole("menuitem", { name: "Profile & settings" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "View home" })).not.toBeInTheDocument();
   });
 
-  test.each([
-    ["Profile & settings", "/settings"],
-    ["View home", "/"],
-  ])("navigates from %s", async (item, path) => {
+  test("opens profile and settings", async () => {
     const user = await openMenu();
-    await user.click(screen.getByRole("menuitem", { name: item }));
-    expect(navigate).toHaveBeenCalledWith(path);
+    await user.click(screen.getByRole("menuitem", { name: "Profile & settings" }));
+    expect(navigate).toHaveBeenCalledWith("/settings");
   });
 
-  test("signs out before navigating away", async () => {
+  test("signs out before navigating to auth", async () => {
     const user = await openMenu();
     await user.click(screen.getByRole("menuitem", { name: "Log out" }));
     expect(signOut).toHaveBeenCalledOnce();
@@ -58,7 +62,7 @@ describe("UserMenu", () => {
     expect(navigate).toHaveBeenCalledWith("/auth");
   });
 
-  test("keeps the user in place and explains a sign-out failure", async () => {
+  test("reports a sign-out failure without navigating", async () => {
     signOut.mockResolvedValue({ error: { message: "Session expired" } });
     const user = await openMenu();
     await user.click(screen.getByRole("menuitem", { name: "Log out" }));

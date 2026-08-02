@@ -14,6 +14,8 @@ import {
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
 import Navigation from '@/components/Navigation';
+import ActionButton from '@/components/ActionButton';
+import PageHeader from '@/components/PageHeader';
 import UserMenu from '@/components/UserMenu';
 import { useAssignment } from '@/hooks/useAssignment';
 import { useAiChats } from '@/hooks/useAiChats';
@@ -120,38 +122,30 @@ const AssignmentPage = () => {
     <div className="app-background min-h-screen flex">
       <Navigation />
       <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" size="icon" onClick={() => navigate(`/courses/${courseId}`)}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">{assignment.title}</h1>
-                <p className="text-sm text-gray-500">
-                  Part of <Link to={`/courses/${courseId}`} className="text-blue-600 hover:underline">{assignment.courses?.name}</Link>
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={() => assignmentId && generatePlan(assignmentId)} disabled={isGenerating || !assignment?.due_date} title={!assignment?.due_date ? "An assignment must have a due date to generate a study plan." : ""}>
-                <Brain className="h-4 w-4 mr-2" />
-                {isGenerating ? 'Generating Plan...' : 'Make a Study Plan'}
-              </Button>
-              <EditAssignmentDialog
-                assignment={assignment}
-                onUpdate={handleUpdateAssignment}
-                isUpdating={isUpdating}
-              >
-                <Button variant="outline">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Assignment
-                </Button>
-              </EditAssignmentDialog>
-              <UserMenu />
+        <PageHeader
+          actionsClassName="gap-2"
+          actions={<>
+            <ActionButton icon={Brain} variant="outline" onClick={() => assignmentId && generatePlan(assignmentId)} disabled={isGenerating || !assignment?.due_date} title={!assignment?.due_date ? "An assignment must have a due date to generate a study plan." : ""}>
+              {isGenerating ? 'Generating Plan...' : 'Make a Study Plan'}
+            </ActionButton>
+            <EditAssignmentDialog assignment={assignment} onUpdate={handleUpdateAssignment} isUpdating={isUpdating}>
+              <ActionButton icon={Edit} variant="outline">Edit Assignment</ActionButton>
+            </EditAssignmentDialog>
+            <UserMenu />
+          </>}
+        >
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" size="icon" onClick={() => navigate(`/courses/${courseId}`)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">{assignment.title}</h1>
+              <p className="text-sm text-gray-500">
+                Part of <Link to={`/courses/${courseId}`} className="text-blue-600 hover:underline">{assignment.courses?.name}</Link>
+              </p>
             </div>
           </div>
-        </header>
+        </PageHeader>
 
         <div className="p-6 max-w-4xl mx-auto">
           <Card className="mb-6">
@@ -266,10 +260,7 @@ const AssignmentPage = () => {
                   <MessageSquare className="h-5 w-5 mr-2" />
                   Linked AI Tutor Chats
                 </div>
-                <Button size="sm" onClick={handleNewChat}>
-                  <Brain className="h-4 w-4 mr-2" />
-                  Start New Chat
-                </Button>
+                <ActionButton icon={Brain} size="sm" onClick={handleNewChat}>Start New Chat</ActionButton>
               </CardTitle>
             </CardHeader>
             <CardContent>

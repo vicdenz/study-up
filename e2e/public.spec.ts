@@ -49,6 +49,13 @@ test.describe("@public public and unauthenticated journeys", () => {
     ).toBeVisible();
   });
 
+  test("Get started opens the sign-up form directly", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Get started" }).click();
+    await expect(page).toHaveURL(/\/auth\?mode=signup$/);
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+  });
+
   test("primary actions are reachable by keyboard", async ({ page }) => {
     await page.goto("/");
 

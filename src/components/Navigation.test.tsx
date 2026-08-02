@@ -25,12 +25,12 @@ describe("Navigation", () => {
       expect(screen.getByRole("button", { name: label })).toBeVisible();
     }
     expect(screen.getByRole("button", { name: "Courses" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("button", { name: "View home" })).not.toBeInTheDocument();
   });
 
   test.each([
     ["AI Tutor", "/ai-tutor"],
     ["Profile & settings", "/settings"],
-    ["View home", "/"],
   ])("navigates from %s", async (label, destination) => {
     const user = userEvent.setup();
     render(<Navigation />);

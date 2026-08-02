@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, FileText, Users, Brain, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import AddCourseDialog from "@/components/AddCourseDialog";
 import { useCourses } from "@/hooks/useCourses";
@@ -70,16 +71,9 @@ const Courses = () => {
       <Navigation />
       
       <main className="min-w-0 flex-1">
-        {/* Header */}
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Courses</h1>
-            <div className="flex items-center space-x-4">
-              <AddCourseDialog onAddCourse={handleAddCourse} isCreating={isCreating} />
-              <UserMenu />
-            </div>
-          </div>
-        </header>
+        <PageHeader actions={<><AddCourseDialog onAddCourse={handleAddCourse} isCreating={isCreating} /><UserMenu /></>}>
+          <h1 className="text-xl font-semibold text-gray-900">Courses</h1>
+        </PageHeader>
 
         <div className="p-6">
           <div className="mb-8">

@@ -11,7 +11,9 @@ import { useNavigate } from "@/lib/router";
 import { toast } from "sonner";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(
+    () => new URLSearchParams(window.location.search).get("mode") !== "signup",
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({

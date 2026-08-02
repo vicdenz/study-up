@@ -5,11 +5,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "@/lib/router";
@@ -43,8 +41,14 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full p-0" aria-label="Open user menu">
-          <Avatar className="h-9 w-9 border-2 border-white shadow-sm ring-1 ring-violet-200">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-11 w-11 rounded-full p-0"
+          aria-label="Open user menu"
+          title={name || user?.email || "User menu"}
+        >
+          <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-violet-200">
             <AvatarImage src={profile?.avatar_url ?? undefined} alt={name || "User"} />
             <AvatarFallback className="bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-sm font-semibold text-violet-700">
               {initials}
@@ -52,22 +56,16 @@ const UserMenu = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="px-2.5 py-2 font-normal">
-          <span className="block truncate font-semibold text-slate-900">{name || "StudyUp student"}</span>
-          <span className="block truncate text-xs text-muted-foreground">{user?.email}</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuItem onSelect={() => navigate("/settings")}>
           <Settings className="mr-2" />
           Profile & settings
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate("/")}>
-          <Home className="mr-2" />
-          View home
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleLogout} disabled={loading} className="text-red-600 focus:text-red-700">
+        <DropdownMenuItem
+          onSelect={handleLogout}
+          disabled={loading}
+          className="text-red-600 focus:text-red-700"
+        >
           <LogOut className="mr-2" />
           {loading ? "Logging out..." : "Log out"}
         </DropdownMenuItem>

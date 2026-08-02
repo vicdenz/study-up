@@ -44,11 +44,12 @@ describe("AITutor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.sendMessage.mockResolvedValue(undefined);
-    Element.prototype.scrollIntoView = vi.fn();
   });
 
   test("explains connected context and keeps empty-state guidance focused", () => {
-    render(<AITutor />);
+    const { container } = render(<AITutor />);
+    expect(container.querySelector("header")).toHaveClass("app-page-header");
+    expect(container.querySelector("header > div")).toHaveClass("app-page-header-content");
     expect(screen.getByText("What can we work through?")).toBeVisible();
     expect(screen.getByText(/1 course and 1 assignment material/)).toBeVisible();
     expect(screen.getByPlaceholderText("Ask about “Forces”…")).toBeVisible();

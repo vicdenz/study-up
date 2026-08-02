@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { BookOpenCheck, Brain, Save, Send, Sparkles, Trash2, UserRound } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import SaveChatDialog from "@/components/SaveChatDialog";
 import TypewriterText from "@/components/TypewriterText";
 import UserMenu from "@/components/UserMenu";
@@ -32,7 +34,7 @@ const AITutor = () => {
   const { assignments } = useAllAssignments();
   const locationState = location.state;
   const previousMessagesLength = useRef(messages.length);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesViewportRef = useRef<HTMLDivElement>(null);
   const { materials: courseMaterials } = useCourseMaterials(locationState?.courseId ?? "");
   const { materials: assignmentMaterials } = useAssignmentMaterials(locationState?.assignmentId);
 
@@ -50,7 +52,8 @@ const AITutor = () => {
       setAnimatedMessageId(latestMessage.id);
     }
     previousMessagesLength.current = messages.length;
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const viewport = messagesViewportRef.current;
+    viewport?.scrollTo?.({ top: viewport.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   const handleSaveChat = (data: { title: string; assignment_id?: string }) => {
@@ -101,19 +104,19 @@ const AITutor = () => {
     <div className="app-background flex min-h-screen">
       <Navigation />
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet-600" /><h1 className="text-xl font-semibold text-slate-900">AI Tutor</h1></div>
-              <p className="mt-1 text-sm text-muted-foreground">Thoughtful help grounded in your StudyUp materials.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button aria-label="Save chat" variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} disabled={!messages.length || isSaving}><Save /><span className="hidden xl:inline">Save</span></Button>
-              <Button aria-label="Clear chat" variant="ghost" size="sm" onClick={clearMessages} disabled={!messages.length}><Trash2 /><span className="hidden xl:inline">Clear</span></Button>
-              <UserMenu />
-            </div>
+        <PageHeader
+          actionsClassName="gap-2"
+          actions={<>
+            <ActionButton icon={Save} aria-label="Save chat" variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} disabled={!messages.length || isSaving}><span className="hidden xl:inline">Save</span></ActionButton>
+            <ActionButton icon={Trash2} aria-label="Clear chat" variant="ghost" size="sm" onClick={clearMessages} disabled={!messages.length}><span className="hidden xl:inline">Clear</span></ActionButton>
+            <UserMenu />
+          </>}
+        >
+          <div>
+            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet-600" /><h1 className="text-xl font-semibold text-slate-900">AI Tutor</h1></div>
+            <p className="mt-1 text-sm text-muted-foreground">Thoughtful help grounded in your StudyUp materials.</p>
           </div>
-        </header>
+        </PageHeader>
 
         <section className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col p-4 md:p-6">
           <div className="flex min-h-[680px] flex-1 flex-col overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
@@ -132,7 +135,7 @@ const AITutor = () => {
               </div>
             )}
 
-            <ScrollArea className="min-h-0 flex-1 px-5">
+            <ScrollArea viewportRef={messagesViewportRef} className="min-h-0 flex-1 px-5">
               <div className="mx-auto max-w-3xl space-y-6 py-6">
                 {messages.length === 0 ? (
                   <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
@@ -145,7 +148,7 @@ const AITutor = () => {
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${message.role === "user" ? "bg-slate-800 text-white" : "bg-violet-100 text-violet-700"}`}>
                       {message.role === "user" ? <UserRound className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                     </div>
-                    <div className={`min-w-0 max-w-[82%] rounded-2xl px-4 py-3 shadow-sm ${message.role === "user" ? "rounded-tr-sm bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 text-white" : "rounded-tl-sm border border-violet-100 bg-white text-slate-800"}`}>
+                    <div className={`min-w-0 max-w-[82%] rounded-2xl px-4 py-3 shadow-sm ${message.role === "user" ? "rounded-tr-sm bg-violet-600 text-white" : "rounded-tl-sm border border-violet-100 bg-white text-slate-800"}`}>
                       {message.role === "assistant" ? (
                         <TypewriterText text={message.content} animate={message.id === animatedMessageId}>
                           {(visibleText) => <div className="prose prose-sm max-w-none break-words prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:bg-slate-900"><ReactMarkdown>{visibleText}</ReactMarkdown></div>}
@@ -158,7 +161,6 @@ const AITutor = () => {
                 {isLoading && (
                   <div className="flex items-start gap-3"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><Sparkles className="h-4 w-4" /></div><div className="flex gap-1 rounded-2xl rounded-tl-sm border border-violet-100 bg-white px-4 py-4" role="status" aria-label="AI is thinking"><span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" /><span className="h-2 w-2 animate-bounce rounded-full bg-violet-500 [animation-delay:120ms]" /><span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500 [animation-delay:240ms]" /></div></div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 

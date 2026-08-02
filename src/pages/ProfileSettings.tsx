@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { KeyRound, Mail, Save, UserRound } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,15 +66,12 @@ const ProfileSettings = () => {
     <div className="app-background flex min-h-screen">
       <Navigation />
       <main className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">Profile & settings</h1>
-              <p className="text-sm text-muted-foreground">Manage your account in one place.</p>
-            </div>
-            <UserMenu />
+        <PageHeader actions={<UserMenu />}>
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900">Profile & settings</h1>
+            <p className="text-sm text-muted-foreground">Manage your account in one place.</p>
           </div>
-        </header>
+        </PageHeader>
 
         <div className="mx-auto grid max-w-5xl gap-6 p-6 lg:grid-cols-2">
           <Card className="border-violet-200/80">
