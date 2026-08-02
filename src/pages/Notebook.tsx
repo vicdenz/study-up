@@ -16,6 +16,8 @@ import {
   Trash2
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import { useNotes } from "@/hooks/useNotes";
 import type { Database } from "@/integrations/supabase/types";
@@ -116,19 +118,9 @@ const Notebook = () => {
       <Navigation />
       
       <main className="min-w-0 flex-1">
-        {/* Header */}
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Knowledge Notebook</h1>
-            <div className="flex items-center space-x-4">
-              <Button onClick={handleCreateNote}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Note
-              </Button>
-              <UserMenu />
-            </div>
-          </div>
-        </header>
+        <PageHeader actions={<><ActionButton icon={Plus} onClick={handleCreateNote}>Create Note</ActionButton><UserMenu /></>}>
+          <h1 className="text-xl font-semibold text-gray-900">Knowledge Notebook</h1>
+        </PageHeader>
 
         <div className="p-6">
           {/* Search and Filters */}
@@ -198,10 +190,7 @@ const Notebook = () => {
                 }
               </p>
               {notes.length === 0 && (
-                <Button onClick={handleCreateNote}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Note
-                </Button>
+                <ActionButton icon={Plus} onClick={handleCreateNote}>Create Note</ActionButton>
               )}
             </div>
           ) : (
@@ -271,7 +260,8 @@ const Notebook = () => {
                         <p className="text-sm text-blue-700">{note.summary}</p>
                       </div>
                     ) : (
-                      <Button
+                      <ActionButton
+                        icon={Brain}
                         variant="outline"
                         size="sm"
                         onClick={(e) => {
@@ -281,9 +271,8 @@ const Notebook = () => {
                         disabled={isGeneratingSummary}
                         className="w-full"
                       >
-                        <Brain className="h-4 w-4 mr-2" />
                         {isGeneratingSummary ? "Generating..." : "Generate AI Summary"}
-                      </Button>
+                      </ActionButton>
                     )}
 
                     {/* Tags */}

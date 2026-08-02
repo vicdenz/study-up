@@ -1,7 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, FileText, Brain, CheckCircle, AlertCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import { useNavigate } from "@/lib/router";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -65,13 +66,9 @@ const Dashboard = () => {
       <Navigation />
       
       <main className="min-w-0 flex-1">
-        {/* Header */}
-        <header className="sticky top-0 z-20 border-b border-violet-100/80 bg-white/80 px-6 py-4 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-            <UserMenu />
-          </div>
-        </header>
+        <PageHeader actions={<UserMenu />}>
+          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        </PageHeader>
 
         <div className="p-6">
           <div className="mb-8">
@@ -107,38 +104,38 @@ const Dashboard = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
+                <ActionButton
+                  icon={BookOpen}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/courses")}
                 >
-                  <BookOpen className="h-4 w-4 mr-2" />
                   View All Courses
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={FileText}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/notebook")}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
                   Create New Note
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={Calendar}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/planner")}
                 >
-                  <Calendar className="h-4 w-4 mr-2" />
                   Plan Study Session
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={Brain}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/ai-tutor")}
                 >
-                  <Brain className="h-4 w-4 mr-2" />
                   Ask AI Tutor
-                </Button>
+                </ActionButton>
               </CardContent>
             </Card>
 
@@ -185,10 +182,7 @@ const Dashboard = () => {
                   <p className="text-gray-600 mb-4">
                     Get personalized study plans, instant help, and smart insights to boost your academic performance.
                   </p>
-                  <Button onClick={() => navigate("/ai-tutor")}>
-                    <Brain className="h-4 w-4 mr-2" />
-                    Explore AI Features
-                  </Button>
+                  <ActionButton icon={Brain} onClick={() => navigate("/ai-tutor")}>Explore AI Features</ActionButton>
                 </div>
                 <Brain className="h-16 w-16 text-blue-600 opacity-20" />
               </div>

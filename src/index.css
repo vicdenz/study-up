@@ -63,11 +63,31 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  h1, h2, h3, p {
+    text-wrap: pretty;
+  }
 }
 
 @layer utilities {
+  .app-page-header {
+    @apply sticky top-0 z-20 h-20 shrink-0 border-b border-violet-100 bg-white/95 px-6;
+  }
+
+  .app-page-header--transparent {
+    @apply border-0 bg-transparent;
+  }
+
+  .app-page-header-content {
+    @apply flex h-full min-w-0 items-center justify-between gap-4;
+  }
+
+  .app-page-header-actions {
+    @apply flex shrink-0 items-center gap-4;
+  }
+
   .app-background {
-    background: linear-gradient(135deg, #eff6ff, #fff, #fdf2f8);
+    background: hsl(var(--background));
   }
 
   .text-gradient {

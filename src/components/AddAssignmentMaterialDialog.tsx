@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import ActionButton from '@/components/ActionButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Loader2, Paperclip } from 'lucide-react';
@@ -68,10 +69,7 @@ const AddAssignmentMaterialDialog: React.FC<AddAssignmentMaterialDialogProps> = 
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || (
-            <Button size="sm">
-                <Paperclip className="h-4 w-4 mr-2" />
-                Add Material
-            </Button>
+          <ActionButton icon={Paperclip} size="sm">Add Material</ActionButton>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
