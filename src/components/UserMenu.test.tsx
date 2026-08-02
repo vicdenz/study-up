@@ -41,7 +41,7 @@ describe("UserMenu", () => {
     const trigger = screen.getByRole("button", { name: "Open user menu" });
     expect(trigger).toHaveClass("h-11", "w-11");
     await user.click(trigger);
-    expect(screen.getByText("AL")).toBeVisible();
+    expect(screen.getByText("AL")).toHaveClass("text-base");
     expect(screen.getAllByRole("menuitem")).toHaveLength(2);
     expect(screen.getByRole("menuitem", { name: "Profile & settings" })).toBeVisible();
     expect(screen.getByRole("menuitem", { name: "Log out" })).toBeVisible();
