@@ -42,6 +42,7 @@ describe("LandingPage authentication states", () => {
       "src",
       "/creators/vicdenz.jpg",
     );
+    expect(davidProfile.querySelector("img")).toHaveAttribute("width", "28");
     const reyabProfile = screen.getByRole("link", { name: "@reyabsaluja" });
     expect(reyabProfile).toHaveAttribute(
       "href",

@@ -64,10 +64,10 @@ const LandingPage = () => {
 
       <footer className="container z-10 mx-auto flex flex-col items-center justify-between gap-4 border-t border-violet-100 px-6 py-8 text-sm text-slate-500 sm:flex-row">
         <Brand compact />
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
           <span>Built by</span>
           {creators.map(({ username, avatar }, index) => (
-            <div key={username} className="flex items-center gap-2">
+            <div key={username} className="flex items-center gap-1">
               {index > 0 && <span aria-hidden="true">and</span>}
               <a
                 href={`https://github.com/${username}`}
@@ -78,9 +78,9 @@ const LandingPage = () => {
                 <img
                   src={avatar}
                   alt=""
-                  width={24}
-                  height={24}
-                  className="h-6 w-6 rounded-full ring-1 ring-slate-900/10"
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full ring-1 ring-slate-900/10"
                 />
                 @{username}
               </a>

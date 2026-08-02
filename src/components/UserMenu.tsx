@@ -50,7 +50,7 @@ const UserMenu = () => {
         >
           <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-violet-200">
             <AvatarImage src={profile?.avatar_url ?? undefined} alt={name || "User"} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-sm font-semibold text-violet-700">
+            <AvatarFallback className="bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-base font-semibold text-violet-700">
               {initials}
             </AvatarFallback>
           </Avatar>
