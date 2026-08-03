@@ -1,5 +1,75 @@
 import AxeBuilder from "@axe-core/playwright";
+import type { Page } from "@playwright/test";
 import { expect, test } from "./test";
+
+const mockUser = {
+  id: "00000000-0000-4000-8000-000000000001",
+  aud: "authenticated",
+  role: "authenticated",
+  email: "mobile-test@studyup.local",
+  app_metadata: { provider: "email", providers: ["email"] },
+  user_metadata: {},
+  identities: [],
+  created_at: "2026-01-01T00:00:00.000Z",
+};
+
+const encodeTokenPart = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
+const mockAccessToken = [
+  encodeTokenPart({ alg: "HS256", typ: "JWT" }),
+  encodeTokenPart({
+    aud: "authenticated",
+    exp: 4_102_444_800,
+    role: "authenticated",
+    sub: mockUser.id,
+  }),
+  "test-signature",
+].join(".");
+
+const installAuthenticatedBackend = async (page: Page) => {
+  await page.route("https://example.supabase.co/**", async (route) => {
+    const url = new URL(route.request().url());
+
+    if (url.pathname === "/auth/v1/token") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: mockAccessToken,
+          expires_in: 2_147_483_647,
+          refresh_token: "test-refresh-token",
+          token_type: "bearer",
+          user: mockUser,
+        }),
+      });
+      return;
+    }
+
+    if (url.pathname === "/auth/v1/user") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mockUser) });
+      return;
+    }
+
+    if (url.pathname === "/rest/v1/profiles") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/vnd.pgrst.object+json",
+        body: JSON.stringify({
+          avatar_url: null,
+          email: mockUser.email,
+          first_name: "Mobile",
+          last_name: "Tester",
+        }),
+      });
+      return;
+    }
+
+    await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+  });
+};
+
+const expectNoDocumentOverflow = (page: Page) => expect.poll(() => page.evaluate(
+  () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+)).toBe(true);
 
 test.describe("@public public and unauthenticated journeys", () => {
   test("landing page exposes the primary product actions", async ({ page }) => {
@@ -109,6 +179,66 @@ test.describe("@public public and unauthenticated journeys", () => {
     expect(dimensions.documentWidth).toBeLessThanOrEqual(
       dimensions.viewportWidth + 1,
     );
+  });
+
+  test("landing and authentication remain usable on a narrow phone", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto("/");
+
+    await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get started" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "@vicdenz" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "@reyabsaluja" })).toBeVisible();
+    await expectNoDocumentOverflow(page);
+
+    await page.getByRole("button", { name: "Get started" }).click();
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create Account" })).toBeVisible();
+    await expectNoDocumentOverflow(page);
+  });
+
+  test("authenticated shell and dialogs remain usable on a narrow phone", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await installAuthenticatedBackend(page);
+    await page.goto("/auth");
+    await page.getByLabel("Email").fill(mockUser.email);
+    await page.getByLabel("Password", { exact: true }).fill("test-password");
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    const navigation = page.getByRole("complementary");
+    await expect(navigation).toBeVisible();
+    expect((await navigation.boundingBox())?.width).toBeLessThanOrEqual(64);
+
+    const destinations = [
+      ["Courses", "Courses"],
+      ["Planner", "Planner"],
+      ["Notebook", "Knowledge Notebook"],
+      ["Upload", "Upload Materials"],
+      ["AI Tutor", "AI Tutor"],
+      ["Profile & settings", "Profile & settings"],
+    ] as const;
+
+    for (const [navigationLabel, heading] of destinations) {
+      await page.getByRole("button", { name: navigationLabel, exact: true }).click();
+      await expect(page.getByRole("heading", { name: heading, exact: true }).first()).toBeVisible();
+      await expectNoDocumentOverflow(page);
+    }
+
+    await page.getByRole("button", { name: "Courses", exact: true }).click();
+    await page.getByRole("button", { name: "Add Course" }).first().click();
+    const dialog = page.getByRole("dialog", { name: "Add New Course" });
+    await expect(dialog).toBeVisible();
+    await expect.poll(async () => {
+      const bounds = await dialog.boundingBox();
+      return Boolean(
+        bounds &&
+        bounds.x >= 0 &&
+        bounds.x + bounds.width <= 320 &&
+        bounds.y >= 0 &&
+        bounds.y + bounds.height <= 568
+      );
+    }).toBe(true);
   });
 
   test("reports connectivity loss and recovery", async ({ context, page }) => {

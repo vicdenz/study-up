@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import {
+  DEFAULT_BUDGETS,
   assertBundleBudget,
   measureBundle,
 } from "./check-bundle-budget.mjs";
@@ -32,6 +33,10 @@ afterEach(() => {
 });
 
 describe("bundle budget", () => {
+  test("keeps the production CSS ceiling explicit", () => {
+    expect(DEFAULT_BUDGETS.totalCssBytes).toBe(125_000);
+  });
+
   test("measures nested JavaScript and CSS without counting source maps", () => {
     const root = fixture({
       "app.js": 100,

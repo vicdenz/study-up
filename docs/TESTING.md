@@ -73,7 +73,9 @@ pnpm test:e2e:public:ci --workers=1
 The CI variant executes desktop Chromium, Firefox, and WebKit plus emulated
 Pixel and iPhone profiles. Tests fail on uncaught page errors, browser console
 errors, HTTP 5xx responses, accessibility regressions, responsive overflow,
-offline-state regressions, and the reviewed Chromium visual baseline.
+offline-state regressions, and the reviewed Chromium visual baseline. The public
+suite also includes a 320px-wide narrow-phone check for landing-page and sign-up
+actions, creator links, and horizontal overflow.
 Playwright captures traces, screenshots, videos, an HTML report, and JUnit XML.
 
 Production performance and static-load budgets:
@@ -85,7 +87,9 @@ pnpm test:e2e:performance
 This builds and serves the production artifact, enforces bundle-size ceilings,
 checks navigation/paint timing, and sends 200 requests at concurrency 10 with a
 500 ms local p95 ceiling. It is a regression gate for this static frontend, not
-a substitute for capacity testing Supabase or Gemini.
+a substitute for capacity testing Supabase or Gemini. The production stylesheet
+has a 125 KB uncompressed ceiling; the responsive application shell is included
+in that budget.
 
 Database tests:
 
