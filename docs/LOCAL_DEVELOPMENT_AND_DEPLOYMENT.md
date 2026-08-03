@@ -48,6 +48,36 @@ Protect the `production` environment with required reviewer approval. Never add
 the Gemini key, Supabase service-role key, database password, or E2E password to
 a `VITE_*` variable.
 
+## Configure Google sign-in
+
+Google sign-in requires one OAuth client in Google Cloud and must be enabled in
+the Supabase dashboard before the button can authenticate users:
+
+1. Create a **Web application** OAuth client in Google Cloud.
+2. Add the app origins you use, including `http://127.0.0.1:8080` and the
+   production and preview Vercel origins.
+3. Add Supabase's hosted callback as an authorized redirect URI:
+
+   ```text
+   https://hzkwaecgggkjikwlvghi.supabase.co/auth/v1/callback
+   ```
+
+4. In Supabase, open **Authentication → Providers → Google**, enable the
+   provider, and save the Google client ID and client secret.
+5. In **Authentication → URL Configuration**, allow the production URL,
+   localhost URL, and the Vercel preview URL pattern used by this project.
+
+The Google client secret belongs only in Supabase. Do not put it in `.env.local`,
+Vercel, a `VITE_*` variable, or the repository. Local Supabase OAuth can be added
+later with a separate development-only Google client; it is not enabled by the
+committed local configuration so contributors without Google credentials can
+still start the local stack.
+
+Official setup references:
+
+- <https://supabase.com/docs/guides/auth/social-login/auth-google>
+- <https://developers.google.com/identity/protocols/oauth2/web-server>
+
 ## Run the frontend against hosted Supabase
 
 This is the shortest path when you only need the UI:
