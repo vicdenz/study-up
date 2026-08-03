@@ -2,6 +2,7 @@
   <img alt="StudyUp brain logo" src="public/studyup-logo.svg" width="100" />
   <h1>StudyUp</h1>
   <p>Your courses, materials, plans, and AI tutor in one place.</p>
+  <p>Live at <a href="https://study-up-pi.vercel.app/">study-up-pi.vercel.app</a></p>
 </div>
 
 StudyUp is an AI-powered learning companion built for university students. It
