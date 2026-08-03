@@ -6,8 +6,8 @@ export const DEFAULT_BUDGETS = Object.freeze({
   largestApplicationJavaScriptBytes: 450_000,
   totalApplicationJavaScriptBytes: 1_650_000,
   largestWorkerBytes: 2_300_000,
-  // Includes the responsive application shell and mobile overlay treatments.
-  totalCssBytes: 125_000,
+  // Includes the responsive application shell, mobile overlays, and landing illustration.
+  totalCssBytes: 132_000,
 });
 
 const filesBelow = (root) =>
