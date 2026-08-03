@@ -114,12 +114,12 @@ const AITutor = () => {
         >
           <div>
             <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet-600" /><h1 className="text-xl font-semibold text-slate-900">AI Tutor</h1></div>
-            <p className="mt-1 text-sm text-muted-foreground">Thoughtful help grounded in your StudyUp materials.</p>
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Thoughtful help grounded in your StudyUp materials.</p>
           </div>
         </PageHeader>
 
         <section className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col p-2 md:p-4">
-          <div className="flex min-h-[680px] flex-1 flex-col overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
+          <div className="ai-chat-panel flex flex-1 flex-col overflow-hidden border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-blue-50/80 via-violet-50/80 to-fuchsia-50/80 px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-fuchsia-600 text-white shadow-md"><Brain /></div>
@@ -129,7 +129,7 @@ const AITutor = () => {
             </div>
 
             {hasContext && (
-              <div className="mx-5 mt-4 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-blue-900">
+              <div className="mx-3 mt-3 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 py-3 text-sm text-blue-900 sm:mx-5 sm:mt-4 sm:px-4">
                 <BookOpenCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
                 <div><p className="font-semibold">Course context is connected</p><p className="mt-0.5 text-xs text-blue-700">The tutor can reference {courseMaterials?.length ?? 0} course and {assignmentMaterials?.length ?? 0} assignment material(s){locationState?.assignmentDetails ? ` for “${locationState.assignmentDetails.title}”` : ""}.</p></div>
               </div>
@@ -138,7 +138,7 @@ const AITutor = () => {
             <ScrollArea viewportRef={messagesViewportRef} className="min-h-0 flex-1 px-3 md:px-4">
               <div className="mx-auto max-w-4xl space-y-4 py-4">
                 {messages.length === 0 ? (
-                  <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                  <div className="flex min-h-[280px] flex-col items-center justify-center px-3 text-center sm:min-h-[360px]">
                     <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-violet-700"><Sparkles className="h-7 w-7" /></div>
                     <h3 className="text-xl font-semibold text-slate-900">What can we work through?</h3>
                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">Ask for an explanation, a study plan, practice questions, or help connecting ideas from your materials.</p>

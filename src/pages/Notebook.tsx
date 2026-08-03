@@ -122,7 +122,7 @@ const Notebook = () => {
           <h1 className="text-xl font-semibold text-gray-900">Knowledge Notebook</h1>
         </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           {/* Search and Filters */}
           <div className="mb-6 space-y-4">
             <div className="flex items-center space-x-4">

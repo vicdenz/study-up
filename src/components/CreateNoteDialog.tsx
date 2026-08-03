@@ -69,7 +69,7 @@ const CreateNoteDialog = ({ courses }: CreateNoteDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <ActionButton icon={Plus}>Create Note</ActionButton>
+        <ActionButton icon={Plus} aria-label="Create Note"><span className="hidden sm:inline">Create Note</span></ActionButton>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>

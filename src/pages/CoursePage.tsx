@@ -138,14 +138,14 @@ const CoursePage = () => {
       <Navigation />
       
       <main className="min-w-0 flex-1">
-        <PageHeader actions={<><ActionButton icon={ArrowLeft} variant="outline" onClick={() => navigate('/courses')}>Back to Courses</ActionButton><UserMenu /></>}>
+        <PageHeader actions={<><ActionButton icon={ArrowLeft} aria-label="Back to Courses" variant="outline" onClick={() => navigate('/courses')}><span className="hidden sm:inline">Back to Courses</span></ActionButton><UserMenu /></>}>
           <div className="flex items-center space-x-3">
             <div className={`w-4 h-4 ${course.color} rounded-full`}></div>
-            <h1 className="text-2xl font-bold text-gray-900">{course.name}</h1>
+            <h1 className="truncate text-xl font-bold text-gray-900 sm:text-2xl">{course.name}</h1>
           </div>
         </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           {/* Course Header */}
           <div className="mb-8">
             <p className="text-lg text-gray-600 mb-2">{course.code}</p>

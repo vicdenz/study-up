@@ -65,7 +65,7 @@ const AddCourseDialog = ({ onAddCourse, isCreating }: AddCourseDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <ActionButton icon={Plus}>Add Course</ActionButton>
+        <ActionButton icon={Plus} aria-label="Add Course"><span className="hidden sm:inline">Add Course</span></ActionButton>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

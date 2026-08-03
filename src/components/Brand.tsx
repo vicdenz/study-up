@@ -20,7 +20,7 @@ const Brand = ({ compact = false, className }: BrandProps) => (
       <span className="absolute inset-0 bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
     </span>
     {!compact && (
-      <span className="text-xl font-bold tracking-tight text-foreground">
+      <span className="brand-wordmark text-xl font-bold tracking-tight text-foreground">
         Study<span className="text-gradient">Up</span>
       </span>
     )}

@@ -156,9 +156,9 @@ const NoteEditor = () => {
       >
         <div className="flex items-center space-x-4">
           <Brand compact className="mr-1" />
-          <ActionButton icon={ArrowLeft} variant="ghost" onClick={() => navigate("/notebook")}>Back to Notebook</ActionButton>
+          <ActionButton icon={ArrowLeft} aria-label="Back to Notebook" variant="ghost" onClick={() => navigate("/notebook")}><span className="hidden sm:inline">Back to Notebook</span></ActionButton>
           {lastSaved && (
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="hidden items-center text-sm text-gray-500 lg:flex">
               <Calendar className="h-4 w-4 mr-1" />
               Last saved: {lastSaved.toLocaleTimeString()}
             </div>
@@ -166,7 +166,7 @@ const NoteEditor = () => {
         </div>
       </PageHeader>
 
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="app-page-content mx-auto max-w-4xl">
         {/* Note Metadata */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
