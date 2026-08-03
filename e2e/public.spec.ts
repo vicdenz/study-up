@@ -78,7 +78,11 @@ test.describe("@public public and unauthenticated journeys", () => {
     await expect(
       page.getByRole("heading", { name: /Turn your coursework into clarity/ }),
     ).toBeVisible();
-    await expect(page.getByAltText("StudyUp dashboard showing courses and upcoming work")).toBeVisible();
+    await expect(
+      page.getByRole("img", {
+        name: "Books and course notes coming together inside a StudyUp learning workspace",
+      }),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page).toHaveURL(/\/auth$/);
