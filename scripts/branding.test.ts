@@ -22,12 +22,18 @@ describe("browser branding", () => {
     expect(existsSync("public/favicon.ico")).toBe(false);
   });
 
-  test("uses a product-owned landing-page screenshot path", () => {
+  test("uses a product-owned landing-page illustration", () => {
     const landingPage = readFileSync("src/pages/LandingPage.tsx", "utf8");
+    const illustration = readFileSync(
+      "src/components/StudyWorkspaceIllustration.tsx",
+      "utf8",
+    );
 
-    expect(landingPage).toContain('src="/studyup-dashboard.png"');
+    expect(landingPage).toContain("<StudyWorkspaceIllustration />");
+    expect(landingPage).not.toContain("studyup-dashboard.png");
+    expect(illustration).toContain('aria-label="Books and course notes');
     expect(landingPage.toLowerCase()).not.toContain("lovable");
-    expect(existsSync("public/studyup-dashboard.png")).toBe(true);
+    expect(existsSync("public/studyup-dashboard.png")).toBe(false);
     expect(existsSync("public/lovable-uploads")).toBe(false);
   });
 });

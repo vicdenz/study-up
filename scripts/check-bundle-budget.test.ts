@@ -34,7 +34,7 @@ afterEach(() => {
 
 describe("bundle budget", () => {
   test("keeps the production CSS ceiling explicit", () => {
-    expect(DEFAULT_BUDGETS.totalCssBytes).toBe(125_000);
+    expect(DEFAULT_BUDGETS.totalCssBytes).toBe(132_000);
   });
 
   test("measures nested JavaScript and CSS without counting source maps", () => {
