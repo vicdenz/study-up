@@ -5,20 +5,29 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import UserMenu from "./UserMenu";
 
-const { info, navigate, signOut, success } = vi.hoisted(() => ({
-  info: vi.fn(),
+const { error, navigate, signOut, success } = vi.hoisted(() => ({
+  error: vi.fn(),
   navigate: vi.fn(),
   signOut: vi.fn(),
   success: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
-  toast: { error: vi.fn(), info, success },
-}));
+vi.mock("sonner", () => ({ toast: { error, success } }));
 vi.mock("@/lib/router", () => ({ useNavigate: () => navigate }));
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { signOut } },
+vi.mock("@/hooks/useProfile", () => ({
+  useProfile: () => ({
+    profile: { first_name: "Ada", last_name: "Lovelace", avatar_url: null },
+    user: { email: "ada@example.com" },
+  }),
 }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { signOut } } }));
+
+const openMenu = async () => {
+  const user = userEvent.setup();
+  render(<UserMenu />);
+  await user.click(screen.getByRole("button", { name: "Open user menu" }));
+  return user;
+};
 
 describe("UserMenu", () => {
   beforeEach(() => {
@@ -26,29 +35,38 @@ describe("UserMenu", () => {
     signOut.mockResolvedValue({ error: null });
   });
 
-  test.each([
-    ["Profile", "Profile management is coming soon"],
-    ["Settings", "Settings are coming soon"],
-  ])("gives explicit feedback for the unavailable %s screen", async (item, message) => {
+  test("shows exactly the profile and logout actions", async () => {
     const user = userEvent.setup();
     render(<UserMenu />);
-
-    await user.click(screen.getByRole("button", { name: "Open user menu" }));
-    await user.click(screen.getByRole("menuitem", { name: item }));
-
-    expect(info).toHaveBeenCalledWith(message);
-    expect(navigate).not.toHaveBeenCalled();
+    const trigger = screen.getByRole("button", { name: "Open user menu" });
+    expect(trigger).toHaveClass("h-11", "w-11");
+    await user.click(trigger);
+    expect(screen.getByText("AL")).toHaveClass("text-base");
+    expect(screen.getAllByRole("menuitem")).toHaveLength(2);
+    expect(screen.getByRole("menuitem", { name: "Profile & settings" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "View home" })).not.toBeInTheDocument();
   });
 
-  test("signs out before navigating away", async () => {
-    const user = userEvent.setup();
-    render(<UserMenu />);
+  test("opens profile and settings", async () => {
+    const user = await openMenu();
+    await user.click(screen.getByRole("menuitem", { name: "Profile & settings" }));
+    expect(navigate).toHaveBeenCalledWith("/settings");
+  });
 
-    await user.click(screen.getByRole("button", { name: "Open user menu" }));
+  test("signs out before navigating to auth", async () => {
+    const user = await openMenu();
     await user.click(screen.getByRole("menuitem", { name: "Log out" }));
-
     expect(signOut).toHaveBeenCalledOnce();
     expect(success).toHaveBeenCalledWith("Successfully logged out");
     expect(navigate).toHaveBeenCalledWith("/auth");
+  });
+
+  test("reports a sign-out failure without navigating", async () => {
+    signOut.mockResolvedValue({ error: { message: "Session expired" } });
+    const user = await openMenu();
+    await user.click(screen.getByRole("menuitem", { name: "Log out" }));
+    expect(error).toHaveBeenCalledWith("Session expired");
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

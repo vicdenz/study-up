@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, FileText, Users, Brain, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import AddCourseDialog from "@/components/AddCourseDialog";
 import { useCourses } from "@/hooks/useCourses";
@@ -53,7 +54,7 @@ const Courses = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="app-background min-h-screen flex">
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="flex items-center space-x-2">
@@ -66,22 +67,15 @@ const Courses = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       
-      <main className="flex-1">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Courses</h1>
-            <div className="flex items-center space-x-4">
-              <AddCourseDialog onAddCourse={handleAddCourse} isCreating={isCreating} />
-              <UserMenu />
-            </div>
-          </div>
-        </header>
+      <main className="min-w-0 flex-1">
+        <PageHeader actions={<><AddCourseDialog onAddCourse={handleAddCourse} isCreating={isCreating} /><UserMenu /></>}>
+          <h1 className="text-xl font-semibold text-gray-900">Courses</h1>
+        </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">My Courses</h2>
             <p className="text-gray-600">Manage your courses, track progress, and access AI-powered features.</p>

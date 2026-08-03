@@ -99,6 +99,18 @@ Open:
 private credentials plus the local email-viewer URL to `.env.e2e.local`. Both
 environment files are ignored by Git.
 
+For UI and authentication work on a resource-constrained machine, start only
+Postgres, Auth, PostgREST, the API gateway, and the local email viewer:
+
+```bash
+pnpm dev:local:auth
+```
+
+This command starts the lightweight Docker-backed Supabase stack, regenerates
+`.env.local`, and starts the app. New accounts still require confirmation; open
+<http://127.0.0.1:54324> to follow the local confirmation link. Use the full
+stack above when testing Storage, Studio, Realtime, or Edge Functions.
+
 If you do not need local AI functions, run `pnpm dev` after `env:local`
 instead of `dev:local`. Stop the stack without deleting its data:
 

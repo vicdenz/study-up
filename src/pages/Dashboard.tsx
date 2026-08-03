@@ -1,7 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, FileText, Brain, CheckCircle, AlertCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import { useNavigate } from "@/lib/router";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -61,19 +62,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       
-      <main className="flex-1">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-            <UserMenu />
-          </div>
-        </header>
+      <main className="min-w-0 flex-1">
+        <PageHeader actions={<UserMenu />}>
+          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back!</h2>
             <p className="text-gray-600">Here's what you've accomplished and what's coming up.</p>
@@ -107,38 +104,38 @@ const Dashboard = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
+                <ActionButton
+                  icon={BookOpen}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/courses")}
                 >
-                  <BookOpen className="h-4 w-4 mr-2" />
                   View All Courses
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={FileText}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/notebook")}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
                   Create New Note
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={Calendar}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/planner")}
                 >
-                  <Calendar className="h-4 w-4 mr-2" />
                   Plan Study Session
-                </Button>
-                <Button 
+                </ActionButton>
+                <ActionButton
+                  icon={Brain}
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => navigate("/ai-tutor")}
                 >
-                  <Brain className="h-4 w-4 mr-2" />
                   Ask AI Tutor
-                </Button>
+                </ActionButton>
               </CardContent>
             </Card>
 
@@ -185,10 +182,7 @@ const Dashboard = () => {
                   <p className="text-gray-600 mb-4">
                     Get personalized study plans, instant help, and smart insights to boost your academic performance.
                   </p>
-                  <Button onClick={() => navigate("/ai-tutor")}>
-                    <Brain className="h-4 w-4 mr-2" />
-                    Explore AI Features
-                  </Button>
+                  <ActionButton icon={Brain} onClick={() => navigate("/ai-tutor")}>Explore AI Features</ActionButton>
                 </div>
                 <Brain className="h-16 w-16 text-blue-600 opacity-20" />
               </div>

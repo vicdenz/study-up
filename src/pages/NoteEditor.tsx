@@ -1,7 +1,9 @@
 
 import { useCallback, useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "@/lib/router";
-import { Button } from "@/components/ui/button";
+import Brand from "@/components/Brand";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -139,44 +141,32 @@ const NoteEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/notebook")}
-              className="flex items-center"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Notebook
-            </Button>
-            
-            {lastSaved && (
-              <div className="flex items-center text-sm text-gray-500">
-                <Calendar className="h-4 w-4 mr-1" />
-                Last saved: {lastSaved.toLocaleTimeString()}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {(isSaving || isCreating || isUpdating) && (
-              <div className="flex items-center text-sm text-gray-500">
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                Saving...
-              </div>
-            )}
-            <Button onClick={handleManualSave} size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-          </div>
+    <div className="app-background min-h-screen">
+      <PageHeader
+        actionsClassName="gap-2"
+        actions={<>
+          {(isSaving || isCreating || isUpdating) && (
+            <div className="flex items-center text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              Saving...
+            </div>
+          )}
+          <ActionButton icon={Save} onClick={handleManualSave} size="sm">Save</ActionButton>
+        </>}
+      >
+        <div className="flex items-center space-x-4">
+          <Brand compact className="mr-1" />
+          <ActionButton icon={ArrowLeft} aria-label="Back to Notebook" variant="ghost" onClick={() => navigate("/notebook")}><span className="hidden sm:inline">Back to Notebook</span></ActionButton>
+          {lastSaved && (
+            <div className="hidden items-center text-sm text-gray-500 lg:flex">
+              <Calendar className="h-4 w-4 mr-1" />
+              Last saved: {lastSaved.toLocaleTimeString()}
+            </div>
+          )}
         </div>
-      </header>
+      </PageHeader>
 
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="app-page-content mx-auto max-w-4xl">
         {/* Note Metadata */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,33 +1,37 @@
-
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "@/lib/router";
+import { useProfile } from "@/hooks/useProfile";
 
 const UserMenu = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { profile, user } = useProfile();
+  const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+  const initials = name
+    ? name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()
+    : (user?.email?.[0] ?? "U").toUpperCase();
 
   const handleLogout = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(error.message);
-      } else {
+      if (error) toast.error(error.message);
+      else {
         toast.success("Successfully logged out");
         navigate("/auth");
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while logging out");
     } finally {
       setLoading(false);
@@ -39,25 +43,30 @@ const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className="h-8 w-8 rounded-full"
+          size="icon"
+          className="h-11 w-11 rounded-full p-0"
           aria-label="Open user menu"
+          title={name || user?.email || "User menu"}
         >
-          <User className="h-4 w-4" />
+          <Avatar className="h-11 w-11 border-2 border-white shadow-sm ring-1 ring-violet-200">
+            <AvatarImage src={profile?.avatar_url ?? undefined} alt={name || "User"} />
+            <AvatarFallback className="bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-base font-semibold text-violet-700">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onSelect={() => toast.info("Profile management is coming soon")}>
-          <User className="h-4 w-4 mr-2" />
-          Profile
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onSelect={() => navigate("/settings")}>
+          <Settings className="mr-2" />
+          Profile & settings
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => toast.info("Settings are coming soon")}>
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} disabled={loading}>
-          <LogOut className="h-4 w-4 mr-2" />
+        <DropdownMenuItem
+          onSelect={handleLogout}
+          disabled={loading}
+          className="text-red-600 focus:text-red-700"
+        >
+          <LogOut className="mr-2" />
           {loading ? "Logging out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>

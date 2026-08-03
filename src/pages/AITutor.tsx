@@ -1,31 +1,20 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from '@/lib/router';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, Send, Trash2, FileText, Save } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import UserMenu from '@/components/UserMenu';
-import { useGeminiChat } from '@/hooks/useGeminiChat';
-import type { AiChat } from '@/hooks/useGeminiChat';
-import ReactMarkdown from 'react-markdown';
-import { useCourseMaterials } from '@/hooks/useCourseMaterials';
-import { useAssignmentMaterials } from '@/hooks/useAssignmentMaterials';
-import { useAllAssignments } from '@/hooks/useAssignments';
-import SaveChatDialog from '@/components/SaveChatDialog';
-
-// Custom CSS animation for highlighting new assistant responses
-const highlightStyle = `
-@keyframes ai-highlight {
-  0% { background: #fffbe7; }
-  100% { background: transparent; }
-}
-.ai-highlight {
-  animation: ai-highlight 1.2s ease;
-}
-`;
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { BookOpenCheck, Brain, Save, Send, Sparkles, Trash2, UserRound } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
+import SaveChatDialog from "@/components/SaveChatDialog";
+import TypewriterText from "@/components/TypewriterText";
+import UserMenu from "@/components/UserMenu";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { useAllAssignments } from "@/hooks/useAssignments";
+import { useAssignmentMaterials } from "@/hooks/useAssignmentMaterials";
+import { useCourseMaterials } from "@/hooks/useCourseMaterials";
+import { type AiChat, useGeminiChat } from "@/hooks/useGeminiChat";
+import { useLocation, useNavigate } from "@/lib/router";
 
 interface AITutorLocationState {
   courseId?: string;
@@ -36,331 +25,157 @@ interface AITutorLocationState {
 }
 
 const AITutor = () => {
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [animatedMessageId, setAnimatedMessageId] = useState<string | null>(null);
   const { messages, isLoading, sendMessage, clearMessages, saveChat, isSaving, loadChat } = useGeminiChat();
   const location = useLocation<AITutorLocationState>();
   const navigate = useNavigate();
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const { assignments } = useAllAssignments();
-
   const locationState = location.state;
-
-  // For highlighting the latest assistant message
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-  const prevMessagesLength = useRef(messages.length);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Fetch materials for both course and assignment contexts
-  const { materials: courseMaterials } = useCourseMaterials(locationState?.courseId ?? '');
+  const previousMessagesLength = useRef(messages.length);
+  const messagesViewportRef = useRef<HTMLDivElement>(null);
+  const { materials: courseMaterials } = useCourseMaterials(locationState?.courseId ?? "");
   const { materials: assignmentMaterials } = useAssignmentMaterials(locationState?.assignmentId);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   useEffect(() => {
     const chatToLoad = location.state?.chatToLoad;
     if (chatToLoad) {
       loadChat(chatToLoad);
-      // Clear the state from location to prevent reloading on page refresh or navigation
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, loadChat, navigate, location.pathname]);
+  }, [loadChat, location.pathname, location.state, navigate]);
 
   useEffect(() => {
-    // Detect if a new assistant message arrived
-    if (
-      messages.length > prevMessagesLength.current &&
-      messages[messages.length - 1]?.role === 'assistant'
-    ) {
-      const newAssistantId = messages[messages.length - 1].id;
-      setHighlightId(newAssistantId);
-      // Remove highlight after 1.1s (less than animation duration)
-      setTimeout(() => setHighlightId(null), 1100);
+    const latestMessage = messages[messages.length - 1];
+    if (messages.length > previousMessagesLength.current && latestMessage?.role === "assistant") {
+      setAnimatedMessageId(latestMessage.id);
     }
-    prevMessagesLength.current = messages.length;
-    scrollToBottom();
+    previousMessagesLength.current = messages.length;
+    const viewport = messagesViewportRef.current;
+    viewport?.scrollTo?.({ top: viewport.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   const handleSaveChat = (data: { title: string; assignment_id?: string }) => {
-    const finalData = { ...data };
-    if (locationState?.assignmentId) {
-      finalData.assignment_id = locationState.assignmentId;
-    }
-    saveChat(finalData);
+    saveChat({ ...data, assignment_id: locationState?.assignmentId ?? data.assignment_id });
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    const message = inputMessage.trim();
+    if (!message || isLoading) return;
 
     let context = "You are an AI tutor helping students with their academic questions. Be helpful, encouraging, and provide clear explanations.";
-
-    // Add course-specific context if available
     if (locationState?.courseName) {
       context += ` The student is currently working on the course: "${locationState.courseName}". Tailor your responses to be relevant to this course when appropriate.`;
     }
-
-    // Add assignment-specific context
     if (locationState?.assignmentDetails) {
-        context += `\n\nThe student is specifically focused on the assignment: "${locationState.assignmentDetails.title}".`;
-        if (locationState.assignmentDetails.description) {
-            context += `\nAssignment Description: ${locationState.assignmentDetails.description}`;
-        }
+      context += `\n\nThe student is specifically focused on the assignment: "${locationState.assignmentDetails.title}".`;
+      if (locationState.assignmentDetails.description) context += `\nAssignment Description: ${locationState.assignmentDetails.description}`;
     }
 
     const allMaterials = [...(courseMaterials || []), ...(assignmentMaterials || [])];
-    const imageMaterials = allMaterials.filter(m => m.type.startsWith('image/') && m.url);
-    const textMaterials = allMaterials.filter(m => !m.type.startsWith('image/'));
-    const imageUrls = imageMaterials.map(m => m.url!);
+    const imageMaterials = allMaterials.filter((material) => material.type.startsWith("image/") && material.url);
+    const textMaterials = allMaterials.filter((material) => !material.type.startsWith("image/"));
+    const imageUrls = imageMaterials.map((material) => material.url!);
 
-    // Add text materials to the context
     if (textMaterials.length > 0) {
-        const materialInfo = textMaterials.map(m => {
-            if (m.content) {
-                return `Material Title: "${m.title}"\nType: ${m.type}\nContent:\n${m.content}`;
-            }
-            return `Material Title: "${m.title}"\nType: ${m.type}\n(Content not available for this file type)`;
-        }).join('\n\n---\n\n');
-        
-        context += `\n\nHere are some text-based materials for reference. Use their content to answer questions when relevant.\n\n${materialInfo}`;
+      const materialInfo = textMaterials.map((material) => material.content
+        ? `Material Title: "${material.title}"\nType: ${material.type}\nContent:\n${material.content}`
+        : `Material Title: "${material.title}"\nType: ${material.type}\n(Content not available for this file type)`
+      ).join("\n\n---\n\n");
+      context += `\n\nHere are some text-based materials for reference. Use their content to answer questions when relevant.\n\n${materialInfo}`;
     }
-
     if (imageMaterials.length > 0) {
-        context += `\n\nAdditionally, ${imageMaterials.length} image(s) have been provided with the following titles: ${imageMaterials.map(m => `"${m.title}"`).join(', ')}. When asked about an image, use the corresponding image data provided alongside this prompt.`;
+      context += `\n\nAdditionally, ${imageMaterials.length} image(s) have been provided with the following titles: ${imageMaterials.map((material) => `"${material.title}"`).join(", ")}. When asked about an image, use the corresponding image data provided alongside this prompt.`;
     }
 
-    await sendMessage(inputMessage, context, imageUrls);
-    setInputMessage('');
+    setInputMessage("");
+    await sendMessage(message, context, imageUrls);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const hasCourseMats = courseMaterials && courseMaterials.length > 0;
-  const hasAssignmentContext = locationState?.assignmentDetails;
-  const hasAssignmentMats = assignmentMaterials && assignmentMaterials.length > 0;
+  const hasContext = Boolean(courseMaterials?.length || assignmentMaterials?.length || locationState?.assignmentDetails);
+  const placeholder = locationState?.assignmentDetails
+    ? `Ask about “${locationState.assignmentDetails.title}”…`
+    : locationState?.courseName
+      ? `Ask about ${locationState.courseName}…`
+      : "Ask your AI tutor anything…";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Inject animation CSS style */}
-      <style>{highlightStyle}</style>
+    <div className="app-background flex min-h-screen">
       <Navigation />
-
-      <main className="flex-1">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">StudyUp</h1>
-                <span className="text-sm text-gray-500">AI Tutor</span>
-                {locationState?.courseName && (
-                  <p className="text-sm text-gray-500">Currently helping with: {locationState.courseName}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={() => setShowSaveDialog(true)} disabled={messages.length === 0 || isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Chat
-              </Button>
-              <Button variant="outline" onClick={clearMessages} disabled={messages.length === 0}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear Chat
-              </Button>
-              <UserMenu />
-            </div>
+      <main className="flex min-w-0 flex-1 flex-col">
+        <PageHeader
+          actionsClassName="gap-2"
+          actions={<>
+            <ActionButton icon={Save} aria-label="Save chat" variant="outline" size="sm" onClick={() => setShowSaveDialog(true)} disabled={!messages.length || isSaving}><span className="hidden xl:inline">Save</span></ActionButton>
+            <ActionButton icon={Trash2} aria-label="Clear chat" variant="ghost" size="sm" onClick={clearMessages} disabled={!messages.length}><span className="hidden xl:inline">Clear</span></ActionButton>
+            <UserMenu />
+          </>}
+        >
+          <div>
+            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet-600" /><h1 className="text-xl font-semibold text-slate-900">AI Tutor</h1></div>
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Thoughtful help grounded in your StudyUp materials.</p>
           </div>
-        </header>
+        </PageHeader>
 
-        <div className="p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">AI-Powered Learning Assistant</h2>
-              <p className="text-gray-600">
-                Ask questions about your studies and get intelligent, personalized help.
-                {locationState?.courseName && ` Currently focused on ${locationState.courseName}.`}
-                {locationState?.assignmentDetails && ` Specifically, the assignment "${locationState.assignmentDetails.title}".`}
-              </p>
+        <section className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col p-2 md:p-4">
+          <div className="ai-chat-panel flex flex-1 flex-col overflow-hidden border border-violet-200/80 bg-white shadow-xl shadow-violet-900/5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-blue-50/80 via-violet-50/80 to-fuchsia-50/80 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-fuchsia-600 text-white shadow-md"><Brain /></div>
+                <div><h2 className="font-semibold text-slate-900">StudyUp Tutor</h2><p className="text-xs text-slate-500">Powered by Gemini</p></div>
+              </div>
+              {locationState?.courseName && <span className="rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm">{locationState.courseName}{locationState.assignmentDetails ? ` · ${locationState.assignmentDetails.title}` : ""}</span>}
             </div>
 
-            <Card className="h-[600px] flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center flex-wrap">
-                  <Brain className="h-5 w-5 mr-2" />
-                  Chat with AI Tutor (Powered by Gemini)
-                  {locationState?.courseName && (
-                    <span className="ml-2 text-sm font-normal text-gray-500">
-                      - {locationState.courseName}
-                      {locationState?.assignmentDetails && ` / ${locationState.assignmentDetails.title}`}
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
+            {hasContext && (
+              <div className="mx-3 mt-3 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 py-3 text-sm text-blue-900 sm:mx-5 sm:mt-4 sm:px-4">
+                <BookOpenCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                <div><p className="font-semibold">Course context is connected</p><p className="mt-0.5 text-xs text-blue-700">The tutor can reference {courseMaterials?.length ?? 0} course and {assignmentMaterials?.length ?? 0} assignment material(s){locationState?.assignmentDetails ? ` for “${locationState.assignmentDetails.title}”` : ""}.</p></div>
+              </div>
+            )}
 
-              <CardContent className="flex-1 flex flex-col overflow-hidden">
-                {/* Context indicators */}
-                {(hasCourseMats || hasAssignmentContext || hasAssignmentMats) && (
-                  <div className="mb-4 p-3 rounded-md bg-blue-50 border border-blue-200 text-sm text-blue-800">
-                    <div className="flex items-start space-x-2">
-                      <FileText className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-semibold">This chat has extra context:</span>
-                        <ul className="list-disc list-inside mt-1">
-                          {hasAssignmentContext && <li>Assignment: "{locationState?.assignmentDetails?.title}"</li>}
-                          {hasCourseMats && <li>{courseMaterials.length} course material(s)</li>}
-                          {hasAssignmentMats && <li>{assignmentMaterials.length} assignment material(s)</li>}
-                        </ul>
-                        <p className="mt-1">The AI will use this information to better answer your questions.</p>
-                      </div>
+            <ScrollArea viewportRef={messagesViewportRef} className="min-h-0 flex-1 px-3 md:px-4">
+              <div className="mx-auto max-w-4xl space-y-4 py-4">
+                {messages.length === 0 ? (
+                  <div className="flex min-h-[280px] flex-col items-center justify-center px-3 text-center sm:min-h-[360px]">
+                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 via-violet-100 to-fuchsia-100 text-violet-700"><Sparkles className="h-7 w-7" /></div>
+                    <h3 className="text-xl font-semibold text-slate-900">What can we work through?</h3>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">Ask for an explanation, a study plan, practice questions, or help connecting ideas from your materials.</p>
+                  </div>
+                ) : messages.map((message) => (
+                  <div key={message.id} className={`flex items-start gap-2 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${message.role === "user" ? "bg-slate-800 text-white" : "bg-violet-100 text-violet-700"}`}>
+                      {message.role === "user" ? <UserRound className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                    </div>
+                    <div className={`min-w-0 max-w-[88%] rounded-2xl px-3 py-2.5 shadow-sm shadow-slate-900/10 ${message.role === "user" ? "rounded-tr-sm bg-violet-600 text-white" : "rounded-tl-sm border border-violet-100 bg-white text-slate-800"}`}>
+                      {message.role === "assistant" ? (
+                        <TypewriterText text={message.content} animate={message.id === animatedMessageId}>
+                          {(visibleText) => <div className="prose prose-sm max-w-none break-words prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:bg-slate-900"><ReactMarkdown>{visibleText}</ReactMarkdown></div>}
+                        </TypewriterText>
+                      ) : <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>}
+                      <p className={`mt-1 text-[10px] ${message.role === "user" ? "text-white/65" : "text-slate-400"}`}>{message.timestamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
                     </div>
                   </div>
+                ))}
+                {isLoading && (
+                  <div className="flex items-start gap-3"><div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><Sparkles className="h-4 w-4" /></div><div className="flex gap-1 rounded-2xl rounded-tl-sm border border-violet-100 bg-white px-4 py-4" role="status" aria-label="AI is thinking"><span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" /><span className="h-2 w-2 animate-bounce rounded-full bg-violet-500 [animation-delay:120ms]" /><span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500 [animation-delay:240ms]" /></div></div>
                 )}
-                
-                {/* Chat messages scrollable container */}
-                <ScrollArea className="flex-1 mb-4 pr-4">
-                  <div className="space-y-4">
-                    {messages.length === 0 ? (
-                      <div className="text-center text-gray-500 py-8">
-                        <Brain className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p>
-                          {locationState?.courseName
-                            ? `Ready to help you with ${locationState.courseName}!`
-                            : "Start a conversation with your AI tutor!"
-                          }
-                          {locationState?.assignmentDetails && ` We can focus on your assignment: "${locationState.assignmentDetails.title}".`}
-                        </p>
-                        <p className="text-sm mt-2">Ask questions about any subject, request explanations, or get study tips.</p>
-                      </div>
-                    ) : (
-                      messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[80%] md:max-w-[65%] w-full p-3 rounded-lg transition-colors
-                              ${message.role === 'user'
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }
-                              ${message.role === 'assistant' && message.id === highlightId ? 'ai-highlight' : ''}
-                            `}
-                            style={{
-                              wordBreak: 'break-word',
-                              overflowWrap: 'anywhere',
-                              overflow: 'hidden',
-                              whiteSpace: 'pre-wrap',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '100%',
-                              minWidth: 0,
-                            }}
-                          >
-                            {message.role === 'assistant' ? (
-                              <div
-                                className="prose prose-sm break-words whitespace-pre-wrap max-w-full overflow-x-auto"
-                                style={{
-                                  maxWidth: '100%',
-                                  minWidth: 0,
-                                  overflowX: 'auto', // So code/markdown blocks can scroll horizontally!
-                                  wordBreak: 'break-word',
-                                }}
-                              >
-                                <ReactMarkdown
-                                  components={{
-                                    // Clamp super long words and enable horizontal scroll for code/tables within markdown!
-                                    code: ({node, ...props}) => (
-                                      <code
-                                        style={{ wordBreak: 'break-all', overflowX: 'auto', maxWidth: '100%' }}
-                                        className="inline-block max-w-full break-all overflow-x-auto"
-                                        {...props}
-                                      />
-                                    ),
-                                    pre: ({node, ...props}) => (
-                                      <pre
-                                        style={{ overflowX: 'auto', maxWidth: '100%' }}
-                                        className="max-w-full overflow-x-auto"
-                                        {...props}
-                                      />
-                                    ),
-                                    table: ({node, ...props}) => (
-                                      <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                                        <table className="max-w-full" {...props} />
-                                      </div>
-                                    ),
-                                  }}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
-                              </div>
-                            ) : (
-                              <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
-                            )}
-                            <p className="text-xs opacity-70 mt-1">
-                              {message.timestamp.toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
+              </div>
+            </ScrollArea>
 
-                    {isLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            <span className="text-sm">AI is thinking...</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-                </ScrollArea>
-
-                <div className="flex space-x-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={
-                      locationState?.assignmentDetails
-                        ? `Ask about "${locationState.assignmentDetails.title}"...`
-                        : locationState?.courseName
-                        ? `Ask about ${locationState.courseName}...`
-                        : "Ask your AI tutor anything..."
-                    }
-                    disabled={isLoading}
-                    className="flex-1"
-                  />
-                  <Button
-                    aria-label="Send message"
-                    onClick={handleSendMessage}
-                    disabled={isLoading || !inputMessage.trim()}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="border-t border-violet-100 bg-white/80 p-3">
+              <div className="mx-auto flex max-w-4xl items-end gap-3 rounded-2xl border border-violet-200 bg-white p-2 shadow-lg shadow-violet-900/5 focus-within:ring-2 focus-within:ring-violet-300/40">
+                <Textarea value={inputMessage} onChange={(event) => setInputMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSendMessage(); } }} placeholder={placeholder} disabled={isLoading} rows={1} className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0" />
+                <Button size="icon" className="h-11 w-11 shrink-0 rounded-xl" aria-label="Send message" onClick={() => void handleSendMessage()} disabled={isLoading || !inputMessage.trim()}><Send /></Button>
+              </div>
+              <p className="mt-2 text-center text-[11px] text-slate-400">AI can make mistakes. Check important course information.</p>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
 
-      <SaveChatDialog
-        open={showSaveDialog}
-        onOpenChange={setShowSaveDialog}
-        assignments={assignments}
-        onSave={handleSaveChat}
-        isSaving={isSaving}
-      />
+      <SaveChatDialog open={showSaveDialog} onOpenChange={setShowSaveDialog} assignments={assignments} onSave={handleSaveChat} isSaving={isSaving} />
     </div>
   );
 };

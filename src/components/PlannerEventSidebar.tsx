@@ -70,7 +70,7 @@ const PlannerEventSidebar: React.FC<PlannerEventSidebarProps> = ({
 }) => {
     if (!event) {
         return (
-          <div className="w-96 border-l border-gray-200 bg-white p-6 flex flex-col justify-center items-center text-center h-full">
+          <div className="hidden h-full w-96 flex-col items-center justify-center border-l border-gray-200 bg-white p-6 text-center xl:flex">
             <div className="text-gray-500">
               <BookOpen className="h-12 w-12 mx-auto mb-4" />
               <h3 className="text-lg font-semibold">Select an event</h3>
@@ -255,7 +255,7 @@ const PlannerEventSidebar: React.FC<PlannerEventSidebarProps> = ({
     };
     
     return (
-        <Card className="w-96 flex-shrink-0 flex flex-col h-full bg-white shadow-lg">
+        <Card className="fixed inset-x-3 bottom-3 top-20 z-40 flex flex-col overflow-hidden bg-white shadow-xl xl:static xl:h-full xl:w-96 xl:flex-shrink-0 xl:shadow-lg">
             {eventType === 'assignment' ? renderAssignmentDetails() : renderStudySessionDetails()}
         </Card>
     );

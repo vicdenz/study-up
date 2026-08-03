@@ -15,6 +15,8 @@ import {
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
 import Navigation from "@/components/Navigation";
+import ActionButton from "@/components/ActionButton";
+import PageHeader from "@/components/PageHeader";
 import UserMenu from "@/components/UserMenu";
 import { useCourses } from "@/hooks/useCourses";
 import { useAssignments } from "@/hooks/useAssignments";
@@ -102,7 +104,7 @@ const CoursePage = () => {
 
   if (coursesLoading || assignmentsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="app-background min-h-screen flex">
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="flex items-center space-x-2">
@@ -116,7 +118,7 @@ const CoursePage = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="app-background min-h-screen flex">
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -132,28 +134,18 @@ const CoursePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       
-      <main className="flex-1">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`w-4 h-4 ${course.color} rounded-full`}></div>
-              <h1 className="text-2xl font-bold text-gray-900">{course.name}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={() => navigate('/courses')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Courses
-              </Button>
-              <UserMenu />
-            </div>
+      <main className="min-w-0 flex-1">
+        <PageHeader actions={<><ActionButton icon={ArrowLeft} aria-label="Back to Courses" variant="outline" onClick={() => navigate('/courses')}><span className="hidden sm:inline">Back to Courses</span></ActionButton><UserMenu /></>}>
+          <div className="flex items-center space-x-3">
+            <div className={`w-4 h-4 ${course.color} rounded-full`}></div>
+            <h1 className="truncate text-xl font-bold text-gray-900 sm:text-2xl">{course.name}</h1>
           </div>
-        </header>
+        </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           {/* Course Header */}
           <div className="mb-8">
             <p className="text-lg text-gray-600 mb-2">{course.code}</p>
@@ -208,15 +200,9 @@ const CoursePage = () => {
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="flex space-x-4">
-              <Button onClick={() => setShowAddAssignmentDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Assignment
-              </Button>
+              <ActionButton icon={Plus} onClick={() => setShowAddAssignmentDialog(true)}>Add Assignment</ActionButton>
               <AddMaterialDialog onAddMaterial={handleAddMaterial} isUploading={isUploading} />
-              <Button variant="outline" onClick={handleAskAI}>
-                <Brain className="h-4 w-4 mr-2" />
-                Ask AI About This Course
-              </Button>
+              <ActionButton icon={Brain} variant="outline" onClick={handleAskAI}>Ask AI About This Course</ActionButton>
             </div>
           </div>
 
@@ -226,10 +212,7 @@ const CoursePage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Assignments</span>
-                  <Button onClick={() => setShowAddAssignmentDialog(true)} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Assignment
-                  </Button>
+                  <ActionButton icon={Plus} onClick={() => setShowAddAssignmentDialog(true)} size="sm">Add Assignment</ActionButton>
                 </CardTitle>
               </CardHeader>
               <CardContent>

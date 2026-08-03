@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate, useLocation } from "@/lib/router";
 import { useQueryClient } from "@tanstack/react-query";
+import { AuthContext } from "@/hooks/useAuth";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -50,7 +51,7 @@ const AuthWrapper = ({ children }: AuthWrapperProps) => {
       const publicPaths = ["/auth", "/"];
       if (!user && !publicPaths.includes(location.pathname)) {
         navigate("/auth", { replace: true });
-      } else if (user && publicPaths.includes(location.pathname)) {
+      } else if (user && location.pathname === "/auth") {
         navigate("/dashboard", { replace: true });
       }
     }
@@ -59,12 +60,12 @@ const AuthWrapper = ({ children }: AuthWrapperProps) => {
   const publicPaths = ["/auth", "/"];
   const redirecting =
     (!user && !publicPaths.includes(location.pathname)) ||
-    (user && publicPaths.includes(location.pathname));
+    (user && location.pathname === "/auth");
 
   if (loading || redirecting) {
     return (
       <div
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
+        className="app-background min-h-screen flex items-center justify-center"
         role="status"
         aria-live="polite"
       >
@@ -76,7 +77,11 @@ const AuthWrapper = ({ children }: AuthWrapperProps) => {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthWrapper;

@@ -23,6 +23,7 @@ import {
   ClipboardList
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import PageHeader from '@/components/PageHeader';
 import UserMenu from '@/components/UserMenu';
 import { useCourses } from '@/hooks/useCourses';
 import { useCourseMaterials } from '@/hooks/useCourseMaterials';
@@ -200,17 +201,14 @@ const Upload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-background min-h-screen flex">
       <Navigation />
       <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">Upload Materials</h1>
-            <UserMenu />
-          </div>
-        </header>
+        <PageHeader actions={<UserMenu />}>
+          <h1 className="text-xl font-semibold text-gray-900">Upload Materials</h1>
+        </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="w-full max-w-4xl mx-auto space-y-6">
             <Card>
               <CardHeader>

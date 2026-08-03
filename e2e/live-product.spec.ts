@@ -467,7 +467,7 @@ test.describe("@authenticated authenticated product journeys", () => {
       await slot.click();
       await page.getByRole("button", { name: "Create Study Session" }).click();
       await page.getByPlaceholder("Enter session title").fill(sessionName);
-      await page.getByLabel("Course").click();
+      await page.getByRole("combobox", { name: "Course" }).click();
       await page.getByRole("option", { name: courseName, exact: true }).click();
       await page.getByLabel("Duration (minutes)").fill("45");
       await page
@@ -543,7 +543,7 @@ test.describe("@authenticated authenticated product journeys", () => {
 
     await page.getByRole("button", { name: "Clear Chat" }).click();
     await expect(
-      page.getByText("Start a conversation with your AI tutor!"),
+      page.getByRole("heading", { name: "What can we work through?" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Save Chat" })).toBeDisabled();
   });

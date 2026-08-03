@@ -1,75 +1,94 @@
-
+import { Fragment } from "react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
+import ActionButton from "@/components/ActionButton";
+import Brand from "@/components/Brand";
+import PageHeader from "@/components/PageHeader";
+import UserMenu from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
-import { Brain, X } from "lucide-react";
-import { Link, useNavigate } from "@/lib/router";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "@/lib/router";
+
+const creators = [
+  { username: "vicdenz", avatar: "/creators/vicdenz.jpg" },
+  { username: "reyabsaluja", avatar: "/creators/reyabsaluja.jpg" },
+];
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const destination = user ? "/dashboard" : "/auth?mode=signup";
 
   return (
-    <div className="bg-background text-foreground flex flex-col min-h-screen">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-fuchsia-50">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8b5cf60c_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf60c_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-      <header className="container mx-auto px-6 py-4 flex justify-between items-center z-10">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Brain className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold">StudyUp</span>
-        </Link>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <Button variant="ghost" onClick={() => navigate('/auth')}>
-            Login
-          </Button>
-          <Button onClick={() => navigate('/auth')} variant="default">
-            Get Started for Free
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        transparent
+        actions={user ? (
+          <>
+            <ActionButton icon={LayoutDashboard} onClick={() => navigate("/dashboard")}>Dashboard</ActionButton>
+            <UserMenu />
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={() => navigate("/auth")}>Log in</Button>
+            <Button variant="gradient" onClick={() => navigate("/auth?mode=signup")}>Get started</Button>
+          </>
+        )}
+      >
+        <Brand />
+      </PageHeader>
 
-      <main className="container mx-auto px-6 flex-grow flex flex-col pt-16 md:pt-24 z-10">
-        <div className="max-w-3xl">
-          <h1 className="text-[40px] leading-[44px] font-medium tracking-[-.06rem] bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70 py-2">
-            Unlock Your Academic Potential
+      <main className="container z-10 mx-auto grid flex-1 items-center gap-12 px-6 py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-20">
+        <div className="max-w-2xl">
+          <p className="mb-5 text-sm font-semibold text-violet-700">Your personalized learning workspace</p>
+          <h1 className="text-[clamp(2.75rem,6vw,5rem)] font-bold leading-[0.98] tracking-tight text-slate-950">
+            Turn your coursework into <span className="text-gradient">clarity.</span>
           </h1>
-          <p className="mt-4 text-sm md:text-base text-muted-foreground">
-            StudyUp is the all-in-one academic planner and AI tutor. Organize your schedule, manage assignments, and get instant help.
+          <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+            Everything you study, together in one place. Get answers from an AI tutor that understands your coursework.
           </p>
-          <div className="mt-8 mb-5">
-            <Button size="lg" onClick={() => navigate('/auth')} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2">
-              Try it Out
+          <div className="mt-8">
+            <Button variant="gradient" size="lg" onClick={() => navigate(destination)}>
+              {user ? "Open your dashboard" : "Start studying for free"}<ArrowRight />
             </Button>
           </div>
         </div>
 
-        <div className="relative mt-8 md:mt-16 w-full">
-          <div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-20 blur-2xl"></div>
-          <img 
-            src="/studyup-dashboard.png"
-            alt="StudyUp application screenshot" 
-            className="relative rounded-lg shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
-          />
+        <div className="relative mx-auto w-full max-w-4xl">
+          <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-blue-300 via-violet-300 to-fuchsia-300 opacity-30 blur-2xl" />
+          <div className="relative overflow-hidden rounded-3xl border border-white bg-white p-2 shadow-2xl shadow-violet-900/10">
+            <img src="/studyup-dashboard.png" alt="StudyUp dashboard showing courses and upcoming work" className="w-full rounded-xl" />
+          </div>
         </div>
       </main>
 
-      <footer className="container mx-auto px-6 py-8 mt-16 md:mt-24 flex justify-between items-center text-muted-foreground text-sm z-10">
-        <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-                <Brain className="h-4 w-4 text-primary-foreground" />
-            </div>
+      <footer className="container z-10 mx-auto flex flex-col items-center justify-between gap-4 border-t border-violet-100 px-6 py-8 text-sm text-slate-500 sm:flex-row">
+        <Brand compact />
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <span>Built by</span>
+          {creators.map(({ username, avatar }, index) => (
+            <Fragment key={username}>
+              {index > 0 && <span aria-hidden="true">and</span>}
+              <a
+                href={`https://github.com/${username}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 font-medium text-slate-700 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+              >
+                <img
+                  src={avatar}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full ring-1 ring-slate-900/10"
+                />
+                @{username}
+              </a>
+            </Fragment>
+          ))}
         </div>
-        <div className="flex items-center space-x-4">
-            <a aria-label="LinkedIn" href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <span aria-hidden="true" className="font-semibold">in</span>
-            </a>
-            <a aria-label="X" href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <X className="h-5 w-5" />
-            </a>
-            <a aria-label="GitHub" href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                <span aria-hidden="true" className="font-semibold">GH</span>
-            </a>
-        </div>
-    </footer>
+      </footer>
     </div>
   );
 };

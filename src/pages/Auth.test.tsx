@@ -25,6 +25,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 vi.mock("@/lib/router", () => ({
+  Link: ({ children, to, ...props }: React.PropsWithChildren<{ to: string }>) => <a href={to} {...props}>{children}</a>,
   useNavigate: () => mocks.navigate,
 }));
 
@@ -48,6 +49,7 @@ const fillCredentials = async (
 describe("Auth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/auth");
     mocks.getSession.mockResolvedValue({ data: { session: null } });
     mocks.signInWithPassword.mockResolvedValue({ error: null });
     mocks.signUp.mockResolvedValue({ error: null });
@@ -129,6 +131,13 @@ describe("Auth", () => {
     expect(
       screen.getByRole("heading", { name: "Welcome back" }),
     ).toBeVisible();
+  });
+
+  test("opens directly in sign-up mode when requested by the landing page", () => {
+    window.history.replaceState({}, "", "/auth?mode=signup");
+    render(<Auth />);
+    expect(screen.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Create Account" })).toBeVisible();
   });
 
   test("recovers the form after an unexpected authentication failure", async () => {
