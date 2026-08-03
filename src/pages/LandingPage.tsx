@@ -3,6 +3,7 @@ import { ArrowRight, LayoutDashboard } from "lucide-react";
 import ActionButton from "@/components/ActionButton";
 import Brand from "@/components/Brand";
 import PageHeader from "@/components/PageHeader";
+import StudyWorkspaceIllustration from "@/components/StudyWorkspaceIllustration";
 import UserMenu from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,12 +56,7 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-4xl">
-          <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-blue-300 via-violet-300 to-fuchsia-300 opacity-30 blur-2xl" />
-          <div className="relative overflow-hidden rounded-3xl border border-white bg-white p-2 shadow-2xl shadow-violet-900/10">
-            <img src="/studyup-dashboard.png" alt="StudyUp dashboard showing courses and upcoming work" className="w-full rounded-xl" />
-          </div>
-        </div>
+        <StudyWorkspaceIllustration />
       </main>
 
       <footer className="container z-10 mx-auto flex flex-col items-center justify-between gap-4 border-t border-violet-100 px-6 py-8 text-sm text-slate-500 sm:flex-row">

@@ -32,6 +32,12 @@ describe("LandingPage authentication states", () => {
     );
     expect(container.querySelector("header > div")).toHaveClass("app-page-header-content");
     expect(screen.getByText(/Everything you study, together in one place/)).toBeVisible();
+    expect(
+      screen.getByRole("img", {
+        name: "Books and course notes coming together inside a StudyUp learning workspace",
+      }),
+    ).toBeVisible();
+    expect(screen.queryByAltText(/dashboard showing courses/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Built for focused study")).not.toBeInTheDocument();
     const davidProfile = screen.getByRole("link", { name: "@vicdenz" });
     expect(davidProfile).toHaveAttribute(
