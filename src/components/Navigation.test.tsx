@@ -18,7 +18,13 @@ describe("Navigation", () => {
   beforeEach(() => vi.clearAllMocks());
 
   test("exposes a branded home link and distinct workspace destinations", () => {
-    render(<Navigation />);
+    const { container } = render(<Navigation />);
+    expect(container.querySelector("aside")).toHaveClass(
+      "h-dvh",
+      "w-16",
+      "md:h-screen",
+      "md:w-64",
+    );
     expect(screen.getAllByRole("link", { name: "StudyUp home" })[0]).toHaveAttribute("href", "/");
     expect(screen.getByText("Ada's library")).toBeVisible();
     for (const label of ["Dashboard", "Courses", "Planner", "Notebook", "Upload", "AI Tutor"]) {
