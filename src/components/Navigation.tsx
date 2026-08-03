@@ -29,9 +29,9 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <aside className="sticky top-0 flex h-screen w-20 shrink-0 flex-col border-r border-violet-100 bg-white p-3 md:w-64 md:p-5">
+    <aside className="sticky top-0 flex h-dvh w-16 shrink-0 flex-col border-r border-violet-100 bg-white p-2 md:h-screen md:w-64 md:p-5">
       <div className="mb-8 hidden px-1 md:block"><Brand /></div>
-      <div className="mb-8 flex justify-center md:hidden"><Brand compact /></div>
+      <div className="mb-6 flex justify-center md:hidden"><Brand compact /></div>
 
       <div className="mb-4 hidden rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3 md:block">
         <p className="text-xs font-medium uppercase tracking-wider text-violet-500">Your workspace</p>
@@ -48,7 +48,7 @@ const Navigation = () => {
             <Button
               key={item.path}
               variant="ghost"
-              className={`w-full justify-center px-3 md:justify-start ${
+              className={`w-full justify-center px-2 md:justify-start md:px-3 ${
                 active
                   ? "bg-violet-100 text-violet-800"
                   : "text-slate-600"
@@ -67,7 +67,7 @@ const Navigation = () => {
       <div className="mt-auto space-y-1.5 border-t border-violet-100 pt-4">
         <Button
           variant="ghost"
-          className="w-full justify-center px-3 text-slate-600 md:justify-start"
+          className="w-full justify-center px-2 text-slate-600 md:justify-start md:px-3"
           onClick={() => navigate("/settings")}
           aria-current={isActive("/settings") ? "page" : undefined}
           aria-label="Profile & settings"

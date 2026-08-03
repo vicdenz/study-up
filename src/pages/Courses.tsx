@@ -75,7 +75,7 @@ const Courses = () => {
           <h1 className="text-xl font-semibold text-gray-900">Courses</h1>
         </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">My Courses</h2>
             <p className="text-gray-600">Manage your courses, track progress, and access AI-powered features.</p>

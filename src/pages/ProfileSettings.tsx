@@ -69,11 +69,11 @@ const ProfileSettings = () => {
         <PageHeader actions={<UserMenu />}>
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Profile & settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your account in one place.</p>
+            <p className="hidden text-sm text-muted-foreground sm:block">Manage your account in one place.</p>
           </div>
         </PageHeader>
 
-        <div className="mx-auto grid max-w-5xl gap-6 p-6 lg:grid-cols-2">
+        <div className="app-page-content mx-auto grid max-w-5xl gap-4 sm:gap-6 lg:grid-cols-2">
           <Card className="border-violet-200/80">
             <CardHeader>
               <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><UserRound /></div>

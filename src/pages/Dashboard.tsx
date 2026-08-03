@@ -70,7 +70,7 @@ const Dashboard = () => {
           <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back!</h2>
             <p className="text-gray-600">Here's what you've accomplished and what's coming up.</p>

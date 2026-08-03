@@ -149,8 +149,8 @@ const Planner = () => {
           <h1 className="text-xl font-semibold text-gray-900">Planner</h1>
         </PageHeader>
 
-        <div className="p-6 flex-1 flex overflow-hidden">
-          <Card className="flex-1 flex flex-col overflow-hidden mr-6">
+        <div className="relative flex flex-1 overflow-hidden p-2 sm:p-6">
+          <Card className="flex min-w-0 flex-1 flex-col overflow-hidden xl:mr-6">
             <CardHeader className="flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle>{format(selectedDate, 'MMMM yyyy')}</CardTitle>
@@ -177,8 +177,9 @@ const Planner = () => {
               </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 relative overflow-hidden">
-              <div className="h-full overflow-hidden" data-calendar-grid>
-                <TimeGridCalendar
+              <div className="planner-calendar-scroll" data-calendar-grid>
+                <div className="planner-calendar-canvas">
+                  <TimeGridCalendar
                   selectedDate={selectedDate}
                   onDateSelect={handleDateClick}
                   assignments={assignments}
@@ -188,7 +189,8 @@ const Planner = () => {
                   onAddAssignment={handleAddAssignment}
                   onTimeSlotSelect={handleTimeSlotSelect}
                   onEventClick={handleEventClick}
-                />
+                  />
+                </div>
               </div>
               
               {popoverAnchorElement && (

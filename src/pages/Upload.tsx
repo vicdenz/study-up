@@ -208,7 +208,7 @@ const Upload = () => {
           <h1 className="text-xl font-semibold text-gray-900">Upload Materials</h1>
         </PageHeader>
 
-        <div className="p-6">
+        <div className="app-page-content">
           <div className="w-full max-w-4xl mx-auto space-y-6">
             <Card>
               <CardHeader>

@@ -125,11 +125,11 @@ const AssignmentPage = () => {
         <PageHeader
           actionsClassName="gap-2"
           actions={<>
-            <ActionButton icon={Brain} variant="outline" onClick={() => assignmentId && generatePlan(assignmentId)} disabled={isGenerating || !assignment?.due_date} title={!assignment?.due_date ? "An assignment must have a due date to generate a study plan." : ""}>
-              {isGenerating ? 'Generating Plan...' : 'Make a Study Plan'}
+            <ActionButton icon={Brain} aria-label="Make a Study Plan" variant="outline" onClick={() => assignmentId && generatePlan(assignmentId)} disabled={isGenerating || !assignment?.due_date} title={!assignment?.due_date ? "An assignment must have a due date to generate a study plan." : ""}>
+              <span className="hidden lg:inline">{isGenerating ? 'Generating Plan...' : 'Make a Study Plan'}</span>
             </ActionButton>
             <EditAssignmentDialog assignment={assignment} onUpdate={handleUpdateAssignment} isUpdating={isUpdating}>
-              <ActionButton icon={Edit} variant="outline">Edit Assignment</ActionButton>
+              <ActionButton icon={Edit} aria-label="Edit Assignment" variant="outline"><span className="hidden lg:inline">Edit Assignment</span></ActionButton>
             </EditAssignmentDialog>
             <UserMenu />
           </>}
@@ -139,15 +139,15 @@ const AssignmentPage = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{assignment.title}</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="truncate text-xl font-semibold text-gray-900">{assignment.title}</h1>
+              <p className="hidden text-sm text-gray-500 sm:block">
                 Part of <Link to={`/courses/${courseId}`} className="text-blue-600 hover:underline">{assignment.courses?.name}</Link>
               </p>
             </div>
           </div>
         </PageHeader>
 
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="app-page-content mx-auto max-w-4xl">
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Assignment Details</CardTitle>
