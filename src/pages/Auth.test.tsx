@@ -7,6 +7,7 @@ import Auth from "./Auth";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
+  signInWithOAuth: vi.fn(),
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
   navigate: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getSession: mocks.getSession,
+      signInWithOAuth: mocks.signInWithOAuth,
       signInWithPassword: mocks.signInWithPassword,
       signUp: mocks.signUp,
     },
@@ -51,6 +53,7 @@ describe("Auth", () => {
     vi.clearAllMocks();
     window.history.replaceState({}, "", "/auth");
     mocks.getSession.mockResolvedValue({ data: { session: null } });
+    mocks.signInWithOAuth.mockResolvedValue({ error: null });
     mocks.signInWithPassword.mockResolvedValue({ error: null });
     mocks.signUp.mockResolvedValue({ error: null });
   });
@@ -65,6 +68,55 @@ describe("Auth", () => {
     await waitFor(() =>
       expect(mocks.navigate).toHaveBeenCalledWith("/dashboard"),
     );
+  });
+
+  test("starts Google OAuth with a same-origin dashboard callback", async () => {
+    render(<Auth />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+    await waitFor(() =>
+      expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      }),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalledWith("/dashboard");
+  });
+
+  test("recovers when Google OAuth cannot be started", async () => {
+    mocks.signInWithOAuth.mockResolvedValue({
+      error: { message: "Provider is not enabled" },
+    });
+    render(<Auth />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Could not start Google sign-in. Please try again.",
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  });
+
+  test("recovers when Google OAuth throws unexpectedly", async () => {
+    mocks.signInWithOAuth.mockRejectedValue(new Error("network down"));
+    render(<Auth />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "Could not start Google sign-in. Please try again.",
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
   });
 
   test("normalizes the email and navigates after a successful sign-in", async () => {

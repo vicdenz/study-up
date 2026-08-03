@@ -16,6 +16,7 @@ const Auth = () => {
   );
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -107,6 +108,29 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) {
+        toast.error("Could not start Google sign-in. Please try again.");
+        setGoogleLoading(false);
+      }
+    } catch {
+      toast.error("Could not start Google sign-in. Please try again.");
+      setGoogleLoading(false);
+    }
+  };
+
+  const authenticating = loading || googleLoading;
+
   return (
     <div className="app-background min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -122,6 +146,30 @@ const Auth = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-[#747775] bg-white font-medium text-[#1f1f1f] hover:border-[#747775] hover:bg-[#f8fafd] hover:text-[#1f1f1f]"
+              disabled={authenticating}
+              onClick={handleGoogleSignIn}
+            >
+              <img
+                src="/auth/google-g-logo.png"
+                alt=""
+                aria-hidden="true"
+                className="h-[18px] w-[18px] object-contain"
+              />
+              {googleLoading ? "Connecting to Google…" : "Continue with Google"}
+            </Button>
+
+            <div className="my-5 flex items-center gap-3" aria-hidden="true">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                or continue with email
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
             <form onSubmit={isLogin ? handleLogin : handleSignup} className="space-y-4">
               {!isLogin && (
                 <div className="grid grid-cols-2 gap-4">
@@ -207,7 +255,7 @@ const Auth = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={authenticating}>
                 {loading ? "Please wait..." : (isLogin ? "Sign In" : "Create Account")}
               </Button>
             </form>
