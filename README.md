@@ -80,7 +80,7 @@ supabase functions deploy chat-with-gemini
 supabase functions deploy generate-study-plan
 ```
 
-#### Deployed @ [https://study-up.lovable.app/)
+#### Deployed @ [[https://study-up.lovable.app/](https://study-up-pi.vercel.app/))
 
 ## 🌐 Browser Compatibility
 
